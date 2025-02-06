@@ -12,7 +12,20 @@ export default defineConfig({
     host: '0.0.0.0',
     port: Number(process.env.PORT) || 3000, // Production port
     strictPort: true,
+    // Allow Railway healthcheck host
+    cors: true,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+    },
+    // Allow all hosts in production
+    allowedHosts: [
+      'localhost',
+      '127.0.0.1',
+      'healthcheck.railway.app',
+      '.railway.app',
+      '.up.railway.app'
+    ]
   },
   // Ensure proper base URL for production
-  base: '/',
+  base: '/'
 })
