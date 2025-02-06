@@ -23,7 +23,9 @@ export default defineConfig({
       '127.0.0.1',
       'healthcheck.railway.app',
       '.railway.app',
-      '.up.railway.app'
+      '.up.railway.app',
+      'www.get-toucan.com',
+      'get-toucan.com'
     ]
   },
   // Ensure proper base URL for production
