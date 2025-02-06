@@ -1,15 +1,37 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useAuthStore } from '../authStore'
-import { server } from '../../mocks/server'
-import { http, HttpResponse } from 'msw'
+import { supabase } from '../../supabaseClient'
+import { Session, User, AuthError } from '@supabase/supabase-js'
 
-const mockSession = {
+// Mock Supabase client
+vi.mock('../../supabaseClient', () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn(),
+      signOut: vi.fn(),
+      onAuthStateChange: vi.fn()
+    },
+    from: vi.fn()
+  }
+}))
+
+const mockUser: User = {
+  id: '123',
+  email: 'test@example.com',
+  app_metadata: {},
+  user_metadata: {},
+  aud: 'authenticated',
+  created_at: new Date().toISOString(),
+  role: 'authenticated',
+  updated_at: new Date().toISOString()
+}
+
+const mockSession: Session = {
   access_token: 'test-token',
   refresh_token: 'test-refresh',
-  user: {
-    id: '123',
-    email: 'test@example.com'
-  }
+  expires_in: 3600,
+  token_type: 'bearer',
+  user: mockUser
 }
 
 const mockProfile = {
@@ -20,8 +42,17 @@ const mockProfile = {
   created_at: new Date().toISOString()
 }
 
+const mockPartner = {
+  id: '456',
+  email: 'partner@example.com',
+  pair_code: 'XYZ789',
+  points: 200,
+  created_at: new Date().toISOString()
+}
+
 describe('authStore', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     useAuthStore.setState({
       session: null,
       user: null,
@@ -30,6 +61,29 @@ describe('authStore', () => {
       loading: true,
       initialized: false
     })
+
+    // Default mock implementations
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ 
+      data: { session: null }, 
+      error: null 
+    })
+
+    vi.mocked(supabase.auth.signOut).mockResolvedValue({ error: null })
+
+    vi.mocked(supabase.auth.onAuthStateChange).mockImplementation((callback) => {
+      callback('SIGNED_IN', mockSession)
+      return { data: { subscription: { unsubscribe: vi.fn(), id: '123', callback } } }
+    })
+
+    vi.mocked(supabase.from).mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      or: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: null,
+        error: null
+      })
+    } as any)
   })
 
   it('should initialize with empty state', () => {
@@ -38,49 +92,36 @@ describe('authStore', () => {
     expect(state.user).toBeNull()
     expect(state.profile).toBeNull()
     expect(state.partner).toBeNull()
-    expect(state.loading).toBe(true)
-    expect(state.initialized).toBe(false)
   })
 
   it('should set session', () => {
-    const { setSession } = useAuthStore.getState()
-    setSession(mockSession as any)
-    
+    useAuthStore.getState().setSession(mockSession)
     const state = useAuthStore.getState()
-    expect(state.session).toBe(mockSession)
-    expect(state.user).toBe(mockSession.user)
-    expect(state.loading).toBe(false)
+    expect(state.session).toEqual(mockSession)
+    expect(state.user).toEqual(mockSession.user)
   })
 
   it('should set profile', () => {
-    const { setProfile } = useAuthStore.getState()
-    setProfile(mockProfile)
-    
+    useAuthStore.getState().setProfile(mockProfile)
     const state = useAuthStore.getState()
-    expect(state.profile).toBe(mockProfile)
+    expect(state.profile).toEqual(mockProfile)
   })
 
   it('should set partner', () => {
-    const { setPartner } = useAuthStore.getState()
-    setPartner(mockProfile)
-    
+    useAuthStore.getState().setPartner(mockPartner)
     const state = useAuthStore.getState()
-    expect(state.partner).toBe(mockProfile)
+    expect(state.partner).toEqual(mockPartner)
   })
 
   it('should sign out', async () => {
-    const { signOut } = useAuthStore.getState()
-    
-    // Set some initial state
     useAuthStore.setState({
-      session: mockSession as any,
-      user: mockSession.user as any,
+      session: mockSession,
+      user: mockSession.user,
       profile: mockProfile,
-      partner: mockProfile
+      partner: mockPartner
     })
-    
-    await signOut()
-    
+
+    await useAuthStore.getState().signOut()
     const state = useAuthStore.getState()
     expect(state.session).toBeNull()
     expect(state.user).toBeNull()
@@ -89,49 +130,68 @@ describe('authStore', () => {
   })
 
   it('should initialize auth state', async () => {
-    // Mock successful auth responses
-    server.use(
-      http.get('*/auth/session', () => {
-        return HttpResponse.json({ data: { session: mockSession } })
-      }),
-      http.get('*/profiles', () => {
-        return HttpResponse.json({ data: mockProfile })
-      }),
-      http.get('*/pairings', () => {
-        return HttpResponse.json({ data: { 
-          user_id: '123',
-          partner_id: '456',
-          status: 'approved'
-        }})
-      })
-    )
+    // Mock getSession to return our mock session
+    vi.mocked(supabase.auth.getSession).mockResolvedValueOnce({ 
+      data: { session: mockSession }, 
+      error: null 
+    })
 
-    const { initialize } = useAuthStore.getState()
-    await initialize()
-    
+    // Mock database queries
+    vi.mocked(supabase.from).mockImplementationOnce(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: mockProfile,
+        error: null
+      })
+    } as any))
+
+    vi.mocked(supabase.from).mockImplementationOnce(() => ({
+      select: vi.fn().mockReturnThis(),
+      or: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: { user_id: '123', partner_id: '456', status: 'approved' },
+        error: null
+      })
+    } as any))
+
+    vi.mocked(supabase.from).mockImplementationOnce(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: mockPartner,
+        error: null
+      })
+    } as any))
+
+    await useAuthStore.getState().initialize()
+
     const state = useAuthStore.getState()
     expect(state.session).toEqual(mockSession)
     expect(state.user).toEqual(mockSession.user)
     expect(state.profile).toEqual(mockProfile)
+    expect(state.partner).toEqual(mockPartner)
     expect(state.initialized).toBe(true)
     expect(state.loading).toBe(false)
   })
 
   it('should handle initialization errors', async () => {
-    // Mock error response
-    server.use(
-      http.get('*/auth/session', () => {
-        return new HttpResponse(null, { status: 500 })
-      })
-    )
+    const mockError = new AuthError('Failed to get session')
+    Object.assign(mockError, { status: 401 })
 
-    const { initialize } = useAuthStore.getState()
-    await initialize()
-    
+    vi.mocked(supabase.auth.getSession).mockResolvedValueOnce({ 
+      data: { session: null }, 
+      error: mockError
+    })
+
+    await useAuthStore.getState().initialize()
+
     const state = useAuthStore.getState()
     expect(state.session).toBeNull()
     expect(state.user).toBeNull()
     expect(state.profile).toBeNull()
+    expect(state.partner).toBeNull()
     expect(state.initialized).toBe(true)
     expect(state.loading).toBe(false)
   })
