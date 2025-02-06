@@ -7,7 +7,7 @@
   },
   "deploy": {
     "numReplicas": 1,
-    "startCommand": "npm run preview",
+    "startCommand": "PORT=$PORT npm run preview",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10,
     "healthcheckPath": "/",
@@ -15,7 +15,6 @@
     "healthcheckInterval": 30,
     "env": {
       "NODE_ENV": "production",
-      "PORT": "3000",
       "VITE_SUPABASE_URL": "https://oeljcmhlomgdhencufwj.supabase.co",
       "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lbGpjbWhsb21nZGhlbmN1ZndqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg4MDQ5NTgsImV4cCI6MjA1NDM4MDk1OH0.BsP1jq7gPlH12iuEfTacClmm3Us9B07n4vrPOU-yjXc"
     }
