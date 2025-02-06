@@ -9,7 +9,10 @@ export default defineConfig({
     port: 5173, // Development port
   },
   preview: {
-    host: true,
+    host: '0.0.0.0',
     port: Number(process.env.PORT) || 3000, // Production port
-  }
+    strictPort: true,
+  },
+  // Ensure proper base URL for production
+  base: '/',
 })
