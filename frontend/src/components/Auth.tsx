@@ -1,6 +1,6 @@
 import { Auth } from '@supabase/auth-ui-react'
 import { ThemeSupa } from '@supabase/auth-ui-shared'
-import { supabase } from '../lib/supabaseClient'
+import { supabase } from '../supabaseClient'
 
 export default function AuthComponent() {
   // Get the base URL from environment or window location

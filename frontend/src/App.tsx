@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { Session, AuthChangeEvent } from '@supabase/supabase-js'
-import { supabase } from './lib/supabaseClient'
+import { supabase } from './supabaseClient'
 import AuthComponent from './components/Auth'
 import AuthCallback from './components/AuthCallback'
 import './App.css'
