@@ -7,7 +7,7 @@
   },
   "deploy": {
     "numReplicas": 1,
-    "startCommand": "set PORT=8080 && npm run serve",
+    "startCommand": "PORT=8080 npm run serve",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10,
     "healthcheckPath": "/",
