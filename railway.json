@@ -6,10 +6,11 @@
   },
   "deploy": {
     "numReplicas": 1,
-    "startCommand": "poetry run uvicorn main:app --host 0.0.0.0 --port=8000 --log-level info",
+    "startCommand": "poetry run uvicorn main:app --host 0.0.0.0 --port $PORT",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10,
     "healthcheckPath": "/health",
-    "healthcheckTimeout": 100
+    "healthcheckTimeout": 100,
+    "healthcheckInterval": 30
   }
 }

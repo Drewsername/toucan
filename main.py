@@ -3,28 +3,38 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers import auth
 import os
 import logging
+import sys
 from dotenv import load_dotenv
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Configure logging to output to stdout
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    stream=sys.stdout
+)
 logger = logging.getLogger(__name__)
 
 load_dotenv()
 
 app = FastAPI()
 
-# Get environment variables
+# Get environment variables with detailed logging
+try:
+    port = int(os.getenv("PORT", "8000"))
+    logger.info(f"Using port: {port}")
+except ValueError as e:
+    logger.error(f"Error parsing PORT environment variable: {e}")
+    port = 8000
+    logger.info(f"Falling back to default port: {port}")
+
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
 railway_domain = os.getenv("RAILWAY_PRIVATE_DOMAIN", "toucan.up.railway.app")
-port = int(os.getenv("PORT", "8000"))  # Convert to int for uvicorn
 
-# Log environment information
-logger.info("Starting server with:")
-logger.info(f"Frontend URL: {frontend_url}")
-logger.info(f"Railway domain: {railway_domain}")
-logger.info(f"Port: {port}")
-logger.info(f"Project: {os.getenv('RAILWAY_PROJECT_NAME', 'local')}")
-logger.info(f"Environment: {os.getenv('RAILWAY_ENVIRONMENT_NAME', 'development')}")
+# Log all environment variables for debugging
+logger.info("Environment variables:")
+for key, value in os.environ.items():
+    if not any(secret in key.lower() for secret in ['key', 'password', 'secret', 'token']):
+        logger.info(f"{key}: {value}")
 
 # Configure CORS - include all possible domains
 origins = [
@@ -33,7 +43,8 @@ origins = [
     "http://localhost:3000",  # Alternative local frontend
     f"https://{railway_domain}",  # Railway domain
     "https://toucan.up.railway.app",  # Railway static URL
-    "https://toucan-production.up.railway.app"  # Alternative Railway URL
+    "https://toucan-production.up.railway.app",  # Alternative Railway URL
+    "*"  # Temporarily allow all origins for debugging
 ]
 
 logger.info(f"Configured CORS origins: {origins}")
@@ -70,3 +81,10 @@ async def root():
         "project": os.getenv("RAILWAY_PROJECT_NAME", "local"),
         "environment": os.getenv("RAILWAY_ENVIRONMENT_NAME", "development")
     }
+
+# Log when the application starts
+@app.on_event("startup")
+async def startup_event():
+    logger.info("Application startup complete")
+    logger.info(f"Server running on port {port}")
+    logger.info(f"Health check endpoint: /health")
