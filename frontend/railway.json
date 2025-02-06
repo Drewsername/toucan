@@ -7,7 +7,7 @@
   },
   "deploy": {
     "numReplicas": 1,
-    "startCommand": "PORT=$PORT npm run preview",
+    "startCommand": "export PORT=${PORT:-3000} && npm run preview",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10,
     "healthcheckPath": "/",
