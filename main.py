@@ -13,25 +13,25 @@ load_dotenv()
 
 app = FastAPI()
 
-# Get frontend URL from environment variable, default to local development URL
+# Get environment variables
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
-railway_url = os.getenv("RAILWAY_PUBLIC_DOMAIN")
+railway_url = os.getenv("RAILWAY_STATIC_URL", "toucan.up.railway.app")
+port = os.getenv("PORT", "8000")
 
 # Log environment information
 logger.info(f"Starting server with:")
 logger.info(f"Frontend URL: {frontend_url}")
 logger.info(f"Railway URL: {railway_url}")
+logger.info(f"Port: {port}")
 logger.info(f"Environment: {os.getenv('RAILWAY_ENVIRONMENT', 'development')}")
 
 # Configure CORS
 origins = [
-    frontend_url,  # Local development frontend
-    "https://toucan.up.railway.app",  # Railway deployment URL
+    frontend_url,
+    "http://localhost:5173",
+    f"https://{railway_url}",
+    "https://toucan.up.railway.app"
 ]
-
-# Add Railway domain if available
-if railway_url:
-    origins.append(f"https://{railway_url}")
 
 logger.info(f"Configured CORS origins: {origins}")
 
@@ -49,12 +49,17 @@ app.include_router(auth.router)
 @app.get("/health")
 async def health_check():
     """Health check endpoint for Railway"""
-    return {"status": "healthy"}
+    return {
+        "status": "healthy",
+        "port": port,
+        "environment": os.getenv("RAILWAY_ENVIRONMENT", "development")
+    }
 
 @app.get("/")
 async def root():
     return {
         "status": "online",
         "environment": os.getenv("RAILWAY_ENVIRONMENT", "development"),
-        "service": "Toucan API"
+        "service": "Toucan API",
+        "port": port
     }
