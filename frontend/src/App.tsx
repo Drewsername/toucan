@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { Session } from '@supabase/supabase-js'
-import { supabase } from './lib/supabaseClient'
+import { Session, AuthChangeEvent } from '@supabase/supabase-js'
+import { supabase } from './supabaseClient'
 import AuthComponent from './components/Auth'
 import AuthCallback from './components/AuthCallback'
 import './App.css'
@@ -20,7 +20,7 @@ function App() {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       setSession(session)
     })
 
