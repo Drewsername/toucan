@@ -11,30 +11,38 @@ export default function AuthCallback() {
     
     // Handle specific Supabase error cases
     if (error instanceof AuthError) {
-      switch (error.message) {
-        case 'User already registered':
+      // If the error is about an existing user but we have a valid session,
+      // it means they successfully signed in
+      if (error.message === 'User already registered') {
+        // Check if we have a valid session
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session) {
+            // They're successfully logged in, redirect to home
+            navigate('/')
+            return
+          }
+          // No valid session, show the error
           navigate('/auth/error', { 
             state: { 
               error: 'This email is already associated with an account',
               errorCode: 'user-exists'
             }
           })
-          break
-        case 'Email link is invalid or has expired':
-          navigate('/auth/error', {
-            state: {
-              error: 'The authentication link is invalid or has expired',
-              errorCode: 'token-error'
-            }
-          })
-          break
-        default:
-          navigate('/auth/error', {
-            state: {
-              error: error.message,
-              errorCode: error.name
-            }
-          })
+        })
+      } else if (error.message === 'Email link is invalid or has expired') {
+        navigate('/auth/error', {
+          state: {
+            error: 'The authentication link is invalid or has expired',
+            errorCode: 'token-error'
+          }
+        })
+      } else {
+        navigate('/auth/error', {
+          state: {
+            error: error.message,
+            errorCode: error.name
+          }
+        })
       }
     } else {
       // Handle generic errors
