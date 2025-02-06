@@ -1,9 +1,51 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import { AuthError } from '@supabase/supabase-js'
 
 export default function AuthCallback() {
   const navigate = useNavigate()
+
+  const handleError = (error: AuthError | Error) => {
+    console.error('Auth error:', error)
+    
+    // Handle specific Supabase error cases
+    if (error instanceof AuthError) {
+      switch (error.message) {
+        case 'User already registered':
+          navigate('/auth/error', { 
+            state: { 
+              error: 'This email is already associated with an account',
+              errorCode: 'user-exists'
+            }
+          })
+          break
+        case 'Email link is invalid or has expired':
+          navigate('/auth/error', {
+            state: {
+              error: 'The authentication link is invalid or has expired',
+              errorCode: 'token-error'
+            }
+          })
+          break
+        default:
+          navigate('/auth/error', {
+            state: {
+              error: error.message,
+              errorCode: error.name
+            }
+          })
+      }
+    } else {
+      // Handle generic errors
+      navigate('/auth/error', {
+        state: {
+          error: error.message,
+          errorCode: 'unknown'
+        }
+      })
+    }
+  }
 
   useEffect(() => {
     const handleAuthCallback = async () => {
@@ -13,9 +55,7 @@ export default function AuthCallback() {
         const accessToken = hashParams.get('access_token')
         
         if (!accessToken) {
-          console.error('No access token found in URL')
-          navigate('/auth/error')
-          return
+          throw new Error('No access token found in URL')
         }
 
         // Set the session using the access token
@@ -25,9 +65,7 @@ export default function AuthCallback() {
         })
         
         if (error) {
-          console.error('Error setting session:', error.message)
-          navigate('/auth/error')
-          return
+          throw error
         }
 
         // Clear the URL hash
@@ -36,8 +74,7 @@ export default function AuthCallback() {
         // Successful authentication
         navigate('/')
       } catch (error) {
-        console.error('Error during auth callback:', error)
-        navigate('/auth/error')
+        handleError(error as AuthError | Error)
       }
     }
 

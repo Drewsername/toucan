@@ -4,6 +4,7 @@ import { Session, AuthChangeEvent } from '@supabase/supabase-js'
 import { supabase } from './supabaseClient'
 import AuthComponent from './components/Auth'
 import AuthCallback from './components/AuthCallback'
+import AuthError from './components/AuthError'
 import './App.css'
 
 function App() {
@@ -47,6 +48,10 @@ function App() {
           <Route 
             path="/auth/callback" 
             element={<AuthCallback />} 
+          />
+          <Route 
+            path="/auth/error" 
+            element={<AuthError />} 
           />
           <Route 
             path="/login" 
