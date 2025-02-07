@@ -2,6 +2,7 @@ export interface Profile {
   id: string
   email: string
   pair_code: string | null
+  paired: boolean
   points: number
   created_at: string
 }

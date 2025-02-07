@@ -1,14 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from '../supabaseClient'
 import { User, Session } from '@supabase/supabase-js'
-
-interface Profile {
-  id: string
-  email: string
-  pair_code: string | null
-  points: number
-  created_at: string
-}
+import { Profile } from '../types'
 
 interface AuthState {
   session: Session | null
@@ -22,6 +15,7 @@ interface AuthState {
   setPartner: (partner: Profile) => void
   signOut: () => Promise<void>
   initialize: () => Promise<void>
+  refreshProfile: () => Promise<void>
 }
 
 type AuthStore = ReturnType<typeof createAuthStore>
@@ -114,18 +108,52 @@ const createAuthStore = (set: (fn: (state: AuthState) => Partial<AuthState>) => 
     } finally {
       set(() => ({ initialized: true, loading: false }))
     }
+  },
+
+  refreshProfile: async () => {
+    const { session } = get()
+    if (!session?.user) return
+
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single()
+
+      if (profile) {
+        get().setProfile(profile as Profile)
+
+        // If user is paired, get partner info
+        if (profile.paired) {
+          const { data: pairing } = await supabase
+            .from('pairings')
+            .select('*')
+            .or(`user_id.eq.${session.user.id},partner_id.eq.${session.user.id}`)
+            .eq('status', 'approved')
+            .single()
+
+          if (pairing) {
+            const partnerId = pairing.user_id === session.user.id
+              ? pairing.partner_id
+              : pairing.user_id
+
+            const { data: partner } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', partnerId)
+              .single()
+
+            if (partner) {
+              get().setPartner(partner as Profile)
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing profile:', error)
+    }
   }
 })
 
 export const useAuthStore = create<AuthState>()(createAuthStore)
-
-// Export stores
-export { useTaskStore } from './taskStore'
-export { useOfferStore } from './offerStore'
-export { usePairingStore } from './pairingStore'
-export { useNotificationStore } from './notificationStore'
-
-// Re-export types
-export type { Task, CreateTaskData } from '../services/api'
-export type { Offer, CreateOfferData } from '../services/api'
-export type { Profile, Notification } from '../types' 

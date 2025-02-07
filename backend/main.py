@@ -26,21 +26,10 @@ logger.info(f"Port: {port}")
 logger.info(f"Project: {os.getenv('RAILWAY_PROJECT_NAME', 'local')}")
 logger.info(f"Environment: {os.getenv('RAILWAY_ENVIRONMENT_NAME', 'development')}")
 
-# Configure CORS - include all possible domains
-origins = [
-    frontend_url,
-    "http://localhost:5173",  # Local frontend
-    "http://localhost:3000",  # Alternative local frontend
-    f"https://{railway_domain}",  # Railway domain
-    "https://toucan.up.railway.app",  # Railway static URL
-    "https://toucan-production.up.railway.app"  # Alternative Railway URL
-]
-
-logger.info(f"Configured CORS origins: {origins}")
-
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["http://localhost:5173"],  # Frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
