@@ -5,37 +5,37 @@ import { supabase } from './supabaseClient'
 import AuthComponent from './components/Auth'
 import AuthCallback from './components/AuthCallback'
 import AuthError from './components/AuthError'
+import PairingScreen from './components/PairingScreen'
+import HomeScreen from './components/HomeScreen'
+import { useAuthStore } from './store/authStore'
+import logo from './assets/Transparent Logo.svg'
 import './App.css'
 
 function App() {
-  const [session, setSession] = useState<Session | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { session, loading, profile, initialize } = useAuthStore()
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setLoading(false)
-    })
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
-      setSession(session)
-    })
-
-    return () => subscription.unsubscribe()
+    initialize()
   }, [])
 
-  if (loading) {
+  // Show loading screen until we have both session and profile (if logged in)
+  if (loading || (session && !profile)) {
     return (
       <div className="loading" style={{ 
         display: 'flex', 
+        flexDirection: 'column',
         justifyContent: 'center', 
         alignItems: 'center', 
         height: '100vh' 
       }}>
+        <img 
+          src={logo} 
+          alt="Toucan Logo" 
+          style={{ 
+            width: '200px', 
+            marginBottom: '1rem' 
+          }} 
+        />
         <p>Loading...</p>
       </div>
     )
@@ -44,6 +44,20 @@ function App() {
   return (
     <Router>
       <div className="app">
+        <header style={{
+          padding: '1rem',
+          display: 'flex',
+          justifyContent: 'center',
+          borderBottom: '1px solid #e5e7eb'
+        }}>
+          <img 
+            src={logo} 
+            alt="Toucan Logo" 
+            style={{ 
+              width: '20REM'
+            }} 
+          />
+        </header>
         <Routes>
           <Route 
             path="/auth/callback" 
@@ -61,10 +75,11 @@ function App() {
             path="/" 
             element={
               session ? (
-                <div className="authenticated">
-                  <h2>Welcome, {session.user.email}</h2>
-                  <button onClick={() => supabase.auth.signOut()}>Sign Out</button>
-                </div>
+                profile?.paired ? (
+                  <HomeScreen />
+                ) : (
+                  <PairingScreen />
+                )
               ) : (
                 <Navigate to="/login" />
               )
