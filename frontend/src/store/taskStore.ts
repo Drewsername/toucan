@@ -155,9 +155,10 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
 
     try {
       const response = await api.get('/tasks/active')
-      // Keep existing tasks until we have new ones
+      // Ensure response.data is an array, default to empty array if not
+      const tasks = Array.isArray(response.data) ? response.data : []
       set((state) => ({ 
-        tasks: response.data,
+        tasks,
         loading: false, 
         error: null 
       }))
@@ -171,7 +172,7 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
         await delay(backoffDelay);
         return get().fetchTasks(retryCount + 1);
       } else {
-        // Keep existing tasks on error
+        // Keep existing tasks on error, just update error state
         set((state) => ({ 
           error: 'Failed to fetch tasks',
           loading: false
