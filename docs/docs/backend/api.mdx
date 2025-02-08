@@ -1,0 +1,75 @@
+---
+sidebar_position: 4
+---
+
+# API Reference
+
+## Overview
+The Toucan API is built with FastAPI and provides endpoints for task management, user pairing, and authentication.
+
+## Endpoints
+
+### Tasks
+
+#### Create Task
+```http
+POST /tasks
+```
+
+**Request Body:**
+```json
+{
+  "title": "string",
+  "description": "string",
+  "points": "integer",
+  "validation_required": "boolean",
+  "random_payout": "boolean",
+  "min_points": "integer?",
+  "max_points": "integer?",
+  "due_date": "datetime?"
+}
+```
+
+#### Get Active Tasks
+```http
+GET /tasks/active
+```
+
+#### Complete Task
+```http
+POST /tasks/{task_id}/complete
+```
+
+#### Delete Task
+```http
+DELETE /tasks/{task_id}
+```
+
+**Response (Success):**
+```json
+{
+  "message": "Task deleted successfully"
+}
+```
+
+**Response (Error):**
+```json
+{
+  "detail": "Only the task creator can delete active tasks"
+}
+```
+
+**Notes:**
+- Only the task creator can delete a task
+- Tasks can only be deleted if they are in "active" status
+- Returns 404 if task not found
+- Returns 403 if user is not the task creator
+
+### Authentication
+
+#### Google OAuth
+```http
+GET /auth/google/login
+```
+
+For detailed authentication flow, see the [Authentication](./authentication) documentation.

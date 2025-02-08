@@ -1,0 +1,86 @@
+---
+sidebar_position: 1
+---
+
+# Frontend Architecture
+
+## Overview
+The Toucan frontend is built with React, TypeScript, and Vite, using Zustand for state management.
+
+## Project Structure
+
+```
+frontend/
+├── src/
+│   ├── components/     # React components
+│   │   ├── auth/      # Authentication components
+│   │   ├── tasks/     # Task-related components
+│   │   └── common/    # Shared components
+│   ├── store/         # Zustand stores
+│   │   ├── authStore.ts
+│   │   ├── taskStore.ts
+│   │   └── index.ts
+│   ├── types/         # TypeScript types
+│   ├── utils/         # Helper functions
+│   ├── App.tsx        # Root component
+│   └── main.tsx       # Entry point
+├── public/            # Static assets
+└── vite.config.ts     # Vite configuration
+```
+
+## Key Technologies
+
+### Core
+- **React 18**: UI framework
+- **TypeScript**: Type safety
+- **Vite**: Build tool
+- **TailwindCSS**: Styling
+
+### State Management
+- **Zustand**: Simple state management
+- **React Query**: Server state and caching
+
+### Testing
+- **Vitest**: Unit testing
+- **Testing Library**: Component testing
+- **MSW**: API mocking
+
+## Design Patterns
+
+### Component Organization
+1. **Feature-based Structure**
+   - Components grouped by feature
+   - Shared components in common directory
+
+2. **Component Types**
+   - Container components (data & logic)
+   - Presentational components (UI only)
+   - Layout components (structure)
+
+### State Management
+1. **Zustand Stores**
+   - Separate stores by domain
+   - Minimal cross-store dependencies
+   - TypeScript for type safety
+
+2. **Data Flow**
+   - Unidirectional data flow
+   - Props for component communication
+   - Events for child-to-parent updates
+
+## Best Practices
+
+1. **Performance**
+   - Lazy loading for routes
+   - Memoization where needed
+   - Bundle size optimization
+
+2. **Code Quality**
+   - ESLint & Prettier
+   - Strict TypeScript
+   - Component documentation
+
+3. **Testing**
+   - Unit tests for utilities
+   - Integration tests for components
+   - E2E tests for critical flows

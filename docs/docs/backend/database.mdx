@@ -1,0 +1,184 @@
+---
+sidebar_position: 1
+---
+
+# Database Layer
+
+## Overview
+The database layer provides a clean abstraction over Supabase operations, handling both data access and authentication. It uses a singleton pattern to ensure a single database connection is shared across the application.
+
+## Key Components
+
+### Database Class
+The `Database` class in `models/database.py` provides a clean interface for database operations while abstracting away the complexities of Supabase interactions.
+
+#### Important Notes
+- Supabase's Python client uses **synchronous** database operations
+- The methods are kept `async` for future compatibility and to match our async codebase
+- Uses singleton pattern to maintain a single database connection
+
+#### Methods
+- `fetch_one`: Get a single record with optional validation
+- `fetch_many`: Get multiple records with optional filtering
+- `insert`: Create a new record
+- `update`: Modify existing records
+- `delete`: Remove records
+
+### Example Usage
+```python
+# Get a database instance
+db = Database()
+
+# Fetch a single record
+user = await db.fetch_one(
+    "profiles",
+    {"id": user_id},
+    extra_checks=lambda u: u["active"] == True
+)
+
+# Insert a record
+new_id = await db.insert("tasks", {
+    "title": "New Task",
+    "description": "Task description"
+})
+```
+
+## Supabase Integration
+
+### Authentication
+- Uses Supabase Auth for user management
+- JWT tokens are used for API authentication
+- `get_current_user` dependency in `dependencies.py` handles token verification
+
+### Important Considerations
+1. **Synchronous vs Async Operations**:
+   - Database operations (queries, inserts, etc.) are synchronous
+   - Some auth operations are async, but `get_user` is synchronous
+   - Methods are kept async for consistency and future-proofing
+
+2. **Error Handling**:
+   - All database operations are wrapped in try-catch blocks
+   - Errors are logged and handled gracefully
+   - Appropriate error responses are returned to the client
+
+3. **Security**:
+   - Row Level Security (RLS) policies in Supabase handle data access control
+   - JWT tokens ensure secure API access
+   - User validation is performed at both API and database levels
+
+## Best Practices
+1. Always use the Database class for database operations
+2. Don't create new database connections - use the singleton
+3. Handle potential errors from database operations
+4. Use type hints for better code maintainability
+5. Document any complex queries or business logic 
+
+# Database Schema
+
+## Overview
+Toucan uses Supabase (PostgreSQL) as its database. Below is the complete schema documentation.
+
+## Tables
+
+### Profiles
+User profiles and account information.
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|----------|-------------|
+| id | uuid | NO | null | Primary key |
+| email | text | YES | null | User's email address |
+| pair_code | text | YES | null | Code for pairing with partner |
+| points | integer | YES | 0 | User's point balance |
+| paired | boolean | YES | false | Whether user is paired |
+| created_at | timestamptz | NO | timezone('utc'::text, now()) | Record creation timestamp |
+
+### Pairings
+Manages relationships between paired users.
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|----------|-------------|
+| id | uuid | NO | uuid_generate_v4() | Primary key |
+| user_id | uuid | YES | null | Reference to first user |
+| partner_id | uuid | YES | null | Reference to second user |
+| status | text | YES | 'approved' | Pairing status |
+| created_at | timestamptz | NO | timezone('utc'::text, now()) | Record creation timestamp |
+
+### Tasks
+Core task management table.
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|----------|-------------|
+| id | uuid | NO | gen_random_uuid() | Primary key |
+| title | text | NO | null | Task title |
+| description | text | NO | null | Task description |
+| points | integer | NO | null | Points awarded |
+| creator_id | uuid | NO | null | User who created task |
+| assignee_id | uuid | NO | null | User assigned to task |
+| status | text | NO | 'active' | Task status |
+| validation_required | boolean | NO | false | Requires validation |
+| random_payout | boolean | NO | false | Random point payout |
+| min_points | integer | YES | null | Minimum points (random) |
+| max_points | integer | YES | null | Maximum points (random) |
+| due_date | timestamptz | YES | null | Task due date |
+| created_at | timestamptz | YES | now() | Creation timestamp |
+| updated_at | timestamptz | YES | now() | Last update timestamp |
+
+### Offers
+Reward offers that can be purchased with points.
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|----------|-------------|
+| id | uuid | NO | uuid_generate_v4() | Primary key |
+| creator_id | uuid | YES | null | User who created offer |
+| title | text | NO | null | Offer title |
+| description | text | YES | null | Offer description |
+| category | text | YES | null | Offer category |
+| points_cost | integer | YES | null | Points required |
+| status | text | YES | 'active' | Offer status |
+| created_at | timestamptz | NO | timezone('utc'::text, now()) | Creation timestamp |
+
+### Notifications
+System notifications for users.
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|----------|-------------|
+| id | uuid | NO | uuid_generate_v4() | Primary key |
+| user_id | uuid | YES | null | Target user |
+| message | text | NO | null | Notification message |
+| read | boolean | YES | false | Read status |
+| created_at | timestamptz | NO | timezone('utc'::text, now()) | Creation timestamp |
+
+## Relationships
+
+### Foreign Keys
+- `pairings.user_id` → `profiles.id`
+- `pairings.partner_id` → `profiles.id`
+- `tasks.creator_id` → `profiles.id`
+- `tasks.assignee_id` → `profiles.id`
+- `offers.creator_id` → `profiles.id`
+- `notifications.user_id` → `profiles.id`
+
+### Indexes
+All primary key columns (`id`) are automatically indexed. Foreign key columns are also indexed for performance.
+
+## Row Level Security (RLS)
+
+### Profiles
+- Users can read their own profile
+- Users can read their partner's profile
+- Users can update their own profile
+
+### Tasks
+- Users can read tasks they created or are assigned to
+- Users can create tasks for their partner
+- Users can update tasks they created
+- Users can complete tasks assigned to them
+
+### Offers
+- Users can read all active offers
+- Users can create offers
+- Users can update/delete their own offers
+
+### Notifications
+- Users can only read their own notifications
+- System can create notifications for any user 

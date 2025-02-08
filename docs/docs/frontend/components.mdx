@@ -1,0 +1,101 @@
+---
+sidebar_position: 3
+---
+
+# Component Library
+
+## Overview
+Our frontend utilizes a powerful combination of HeroUI and Tailwind CSS for building beautiful, responsive user interfaces. This setup provides us with a comprehensive set of pre-built components and utility classes while maintaining full customization capabilities.
+
+## Tech Stack
+
+### HeroUI
+We use HeroUI as our primary component library. HeroUI provides a set of fully accessible, customizable components that work seamlessly with Tailwind CSS.
+
+#### Installation
+Our project comes with HeroUI pre-installed. If you need to install it in a new project:
+
+```bash
+npm install @heroui/react
+```
+
+#### Usage
+Import components from HeroUI:
+
+```tsx
+import { Button, Card } from '@heroui/react'
+```
+
+### Tailwind CSS
+Tailwind CSS is our utility-first CSS framework that enables rapid UI development.
+
+#### Configuration
+Tailwind is configured in two main files:
+- `frontend/tailwind.config.js`: Main configuration file
+- `frontend/postcss.config.js`: PostCSS configuration for Tailwind
+
+#### Usage
+Tailwind classes can be used directly in your JSX:
+
+```tsx
+<div className="flex items-center justify-between p-4 bg-white rounded-lg shadow">
+  <h1 className="text-xl font-bold text-gray-900">Example Component</h1>
+</div>
+```
+
+## Best Practices
+
+1. **Component Consistency**
+   - Use HeroUI components when available instead of building from scratch
+   - Maintain consistent spacing using Tailwind's spacing scale
+   - Follow the established color palette defined in `tailwind.config.js`
+
+2. **Responsive Design**
+   - Use Tailwind's responsive prefixes (`sm:`, `md:`, `lg:`, etc.)
+   - Test components across different screen sizes
+
+3. **Performance**
+   - Import HeroUI components individually to enable tree-shaking
+   - Use `@apply` directives sparingly and prefer inline Tailwind classes
+
+## Theme Customization
+Our theme extends both HeroUI and Tailwind's default theme. Refer to `tailwind.config.js` for custom colors, spacing, and other design tokens.
+
+## Examples
+
+### TaskCard
+The TaskCard component is a key UI element that displays task information using HeroUI's Card component and includes a value-over-time chart.
+
+```tsx
+import { TaskCard } from '../components/TaskCard';
+
+// Example usage
+<TaskCard
+  task={taskData}
+  isAssignee={true}
+  status="active"
+/>
+```
+
+#### Features
+- Beautiful HeroUI Card design with status-based styling
+- Points visualization with Recharts area chart
+- Dropdown menu for task actions
+- Status-based color schemes
+- Icon indicators for validation requirements
+- Due date display with icon
+- Responsive layout
+
+#### Props
+- `task`: Task object containing all task details
+- `isAssignee`: Boolean indicating if current user is the task assignee
+- `status`: Task status ('active' | 'completed' | 'cancelled')
+
+#### Styling
+The component uses HeroUI's `tv` (tailwind variants) for consistent styling:
+- Status-based color schemes (primary for active, success for completed, danger for cancelled)
+- Consistent spacing and typography
+- Responsive chart display
+- Icon integration with status indicators
+
+*Check individual component documentation for specific usage examples.*

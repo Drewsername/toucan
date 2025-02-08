@@ -1,0 +1,64 @@
+---
+sidebar_position: 3
+---
+
+# Authentication
+
+## Overview
+Toucan uses Google OAuth for authentication, integrated with Supabase Auth for session management.
+
+## Authentication Flow
+
+1. **User Login**
+   - User clicks "Login with Google"
+   - Redirected to Google OAuth consent screen
+   - Upon approval, redirected back with auth token
+
+2. **Token Handling**
+   - Supabase validates Google token
+   - Creates/updates user profile
+   - Issues JWT session token
+
+3. **API Authentication**
+   - All API requests require Bearer token
+   - Token validated through FastAPI dependency
+   - User profile loaded for each request
+
+## Implementation
+
+### Frontend
+```typescript
+const { session } = useAuthStore()
+
+// API requests
+axios.get(url, {
+  headers: {
+    Authorization: `Bearer ${session.access_token}`
+  }
+})
+```
+
+### Backend
+```python
+@router.get("/tasks")
+async def get_tasks(
+    current_user: User = Depends(get_current_user)
+):
+    # User is automatically authenticated
+    pass
+```
+
+## Security Considerations
+
+1. **Token Storage**
+   - Tokens stored in secure HttpOnly cookies
+   - Automatic token refresh handling
+
+2. **CORS**
+   - Strict CORS policy for API endpoints
+   - Only frontend domain allowed
+
+3. **Session Management**
+   - Short-lived access tokens
+   - Secure token refresh mechanism
+   - Automatic session cleanup

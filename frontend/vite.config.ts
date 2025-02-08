@@ -29,5 +29,8 @@ export default defineConfig({
     ]
   },
   // Ensure proper base URL for production
-  base: '/'
+  base: '/',
+  css: {
+    postcss: './postcss.config.mjs'
+  }
 })

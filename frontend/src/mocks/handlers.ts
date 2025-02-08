@@ -8,6 +8,7 @@ const mockProfile: Profile = {
   id: '123',
   email: 'test@example.com',
   pair_code: 'ABC123',
+  paired: false,
   points: 100,
   created_at: new Date().toISOString()
 }
@@ -47,14 +48,19 @@ export const handlers = [
 
   http.post(`${baseUrl}/tasks`, async ({ request }) => {
     const body = await request.json()
-    return HttpResponse.json({
+    const newTask: Task = {
       ...mockTask,
-      ...body
-    })
+      ...body as Partial<Task>
+    }
+    return HttpResponse.json(newTask)
   }),
 
   http.post(`${baseUrl}/tasks/:id/complete`, () => {
     return HttpResponse.json({ message: 'Task completed' })
+  }),
+
+  http.delete(`${baseUrl}/tasks/:id`, () => {
+    return HttpResponse.json({ message: 'Task deleted successfully' })
   }),
 
   // Offer endpoints
@@ -64,10 +70,11 @@ export const handlers = [
 
   http.post(`${baseUrl}/offers`, async ({ request }) => {
     const body = await request.json()
-    return HttpResponse.json({
+    const newOffer: Offer = {
       ...mockOffer,
-      ...body
-    })
+      ...body as Partial<Offer>
+    }
+    return HttpResponse.json(newOffer)
   }),
 
   http.post(`${baseUrl}/offers/:id/purchase`, () => {

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth
+from routers import auth, tasks
 import os
 import logging
 from dotenv import load_dotenv
@@ -29,7 +29,7 @@ logger.info(f"Environment: {os.getenv('RAILWAY_ENVIRONMENT_NAME', 'development')
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Frontend URL
+    allow_origins=[frontend_url],  # Frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -37,6 +37,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth.router)
+app.include_router(tasks.router)
 
 @app.get("/health")
 async def health_check():

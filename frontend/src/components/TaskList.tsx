@@ -1,12 +1,14 @@
+
 import { useEffect } from 'react'
 import { useTaskStore } from '../store/taskStore'
 import { useAuthStore } from '../store/authStore'
 import TaskCard from './TaskCard'
 import CreateTaskForm from './CreateTaskForm'
 
-const TaskList = () => {
+export default function TaskList ()  {
   const { tasks, loading, error, fetchTasks, subscribe, cleanup } = useTaskStore()
   const { profile } = useAuthStore()
+
 
   // Initial setup
   useEffect(() => {
@@ -57,12 +59,14 @@ const TaskList = () => {
         {assignedTasks.length === 0 ? (
           <p className="text-gray-500">No tasks assigned to you</p>
         ) : (
-          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid w-full gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            
             {assignedTasks.map(task => (
               <TaskCard 
                 key={task.id} 
                 task={task} 
                 isAssignee={true}
+                status={task.status}
               />
             ))}
           </div>
@@ -81,6 +85,7 @@ const TaskList = () => {
                 key={task.id} 
                 task={task} 
                 isAssignee={false}
+                status={task.status}
               />
             ))}
           </div>
@@ -89,5 +94,3 @@ const TaskList = () => {
     </div>
   )
 }
-
-export default TaskList 

@@ -1,0 +1,141 @@
+date,task,description,lessons_learned
+2024-02-07,Database Layer Implementation,"Implemented database abstraction layer with Supabase integration, fixed async/sync operation handling","1. Supabase Python client uses synchronous operations for database but mixed sync/async for auth
+2. Proper error handling and logging is crucial for debugging auth issues
+3. Singleton pattern helps maintain consistent database connections
+4. Keep methods async even with sync operations for future compatibility
+5. Clear separation between database access and business logic improves maintainability"
+2024-02-07,Task Model Improvements,"Separated task creation model from internal model, added validation","1. Separate models for API input vs internal data improve validation and security
+2. Pydantic validators provide clean input validation at the model level
+3. Factory methods (from_create_request) simplify object creation and validation
+4. Clear separation between public API models and internal models reduces errors
+5. Document model relationships and validation rules for better maintainability"
+2024-02-07,Docusaurus Setup,"Migrated documentation to Docusaurus, created comprehensive developer docs","1. Structured documentation with clear navigation improves developer experience
+2. MDX format allows for interactive documentation with React components
+3. Consistent documentation structure helps maintain quality
+4. Keeping documentation close to code (in repo) encourages updates
+5. Documentation should cover both API details and development workflow"
+2024-02-07,Docusaurus Cleanup,"Cleaned up Docusaurus configuration, removed template content, updated branding","1. PowerShell commands need special handling for paths with spaces
+2. Setting routeBasePath to '/' makes documentation the main site content
+3. Removing template content early prevents confusion for other developers
+4. Consistent branding across documentation improves professionalism
+5. Simplified navigation structure makes docs more accessible"
+2024-02-07,Documentation Structure,"Improved documentation organization with proper sidebar and navigation","1. Quick links on the home page improve navigation and discoverability
+2. Organizing docs by domain (backend, frontend, etc.) makes content easier to find
+3. Consistent sidebar structure helps users understand the documentation hierarchy
+4. Clear section descriptions help users find relevant information quickly
+5. Linking related documentation sections creates a better learning path"
+2024-02-07,Documentation Content,"Created initial documentation content for key sections","1. Start with most critical sections (API, Auth, Setup) for immediate developer needs
+2. Use placeholders for planned content to maintain structure
+3. Include code examples to illustrate implementation details
+4. Consistent formatting across documentation improves readability
+5. Prioritize getting started content to help new developers"
+2024-02-07,Navigation Enhancement,"Improved site navigation with comprehensive navbar and footer links","1. Multiple navigation paths help users find content in different ways
+2. Quick access links in navbar improve common path navigation
+3. Footer organization by topic area provides clear content structure
+4. Consistent link destinations prevent user confusion
+5. Full sidebar toggle enables detailed navigation when needed"
+2024-02-07,Database Documentation,"Added comprehensive database schema documentation","1. Organize schema by table with clear descriptions of each field
+2. Document relationships and foreign key constraints
+3. Include Row Level Security policies for each table
+4. Add default values and constraints for data integrity
+5. Group related tables together for better understanding"
+2024-02-07,Task Model DateTime Fix,"Fixed JSON serialization error for datetime fields in Task model","1. Python datetime objects need explicit serialization for JSON/database storage
+2. Use ISO format for consistent datetime string representation
+3. Handle serialization at the model level before database operations
+4. Test datetime fields with both null and non-null values
+5. Document datetime handling in API documentation for frontend integration"
+2024-02-07,Task Deletion Feature,"Added ability for task creators to delete their active tasks","1. Implement permission checks at the model level for better security
+2. Status checks prevent deletion of completed/cancelled tasks
+3. Clear error messages help frontend handle different failure cases
+4. Document API responses for both success and error cases
+5. Keep deletion logic simple and focused on the task creator's perspective"
+2024-02-07,Frontend Task Deletion,"Implemented task deletion in frontend with confirmation dialog","1. Add type safety with proper interfaces for API responses
+2. Use confirmation dialogs for destructive actions
+3. Keep UI consistent with existing action buttons
+4. Handle loading and error states in store
+5. Update mock handlers to support testing deletion functionality"
+2024-02-07,Task Deletion Bug Fix,"Fixed Supabase delete query builder issue","1. Supabase's delete operation requires from_() instead of table()
+2. Query builder methods must be chained in correct order (delete before filters)
+3. Proper error handling helps identify database operation issues
+4. Test database operations with actual Supabase instance
+5. Keep database abstraction layer consistent across operations"
+2024-02-07,Realtime Task Updates,"Added Supabase Realtime for automatic task synchronization","1. Use Supabase channels for real-time database changes
+2. Subscribe to all relevant events (INSERT, UPDATE, DELETE)
+3. Clean up subscriptions on component unmount
+4. Refresh data on any change to maintain consistency
+5. Keep subscription logic in central store for reusability"
+2024-02-07,Realtime Debugging,"Enhanced Supabase Realtime implementation with better error handling and lifecycle management","1. Add detailed logging for subscription lifecycle and events
+2. Configure Supabase client with explicit Realtime options
+3. Properly handle subscription based on user authentication state
+4. Clean up subscriptions when component unmounts or user changes
+5. Monitor subscription status and connection health"
+2024-02-07,Realtime Stability,"Improved Realtime subscription stability and reliability","1. Store channel reference to prevent duplicate subscriptions
+2. Only update subscription state after confirmed connection
+3. Add periodic polling as backup for missed events
+4. Properly handle component remounts and user changes
+5. Use stable dependency arrays in useEffect hooks"
+2024-02-07,Subscription Architecture,"Moved Supabase subscriptions to app level for better stability","1. Handle subscriptions at highest stable component level
+2. Use session token as dependency for subscription lifecycle
+3. Separate data fetching from subscription management
+4. Keep component responsibilities focused and clear
+5. Implement fallback polling at component level"
+2024-02-07,Task Store Performance,"Optimized task operations with optimistic updates","1. Implement optimistic updates for immediate UI feedback
+2. Remove redundant state updates to reduce re-renders
+3. Separate UI updates from network operations
+4. Handle error cases with state rollbacks
+5. Minimize loading state changes for smoother UX"
+2024-02-07,Realtime Event Handling,"Improved Supabase Realtime event handling for direct state updates","1. Handle each event type (INSERT, UPDATE, DELETE) separately
+2. Update state directly from Realtime payloads without refetching
+3. Maintain data consistency with optimistic updates
+4. Ensure proper event order with initial fetch after subscription
+5. Add detailed logging for each event type for debugging"
+2024-02-07,Realtime Implementation Fix,"Fixed Supabase Realtime implementation with proper configuration and database setup","1. Enable Realtime for tasks table with proper replication
+2. Configure channel with broadcast and presence support
+3. Add reconnection logic for connection failures
+4. Improve connection state handling and logging
+5. Document Realtime setup requirements in migrations"
+2024-02-08,HeroUI Integration,"Integrated HeroUI (formerly NextUI) as the primary UI component library with Tailwind CSS setup","1. Windows PowerShell requires different command syntax for chaining commands
+2. HeroUI requires both the core package and themes package
+3. Tailwind CSS integration is required for HeroUI to work properly
+4. Provider setup at the app root level ensures consistent theming
+5. Documentation should include both setup and usage examples"
+2024-02-08,PostCSS Configuration Fix,"Fixed PostCSS configuration to work with ES modules","1. Package.json type:module requires ES module syntax in config files
+2. PostCSS config needs export default instead of module.exports
+3. File extension matters for module resolution in Node.js
+4. ES modules and CommonJS mixing can cause runtime errors
+5. Document module system choices in frontend setup guide"
+2024-02-08,Documentation Update,"Updated frontend documentation with comprehensive HeroUI and Tailwind CSS integration details","1. Keep documentation in sync with UI library changes
+2. Include both installation and usage examples in docs
+3. Document best practices for component consistency
+4. Provide clear examples of component and utility usage
+5. Include responsive design guidelines in documentation"
+2024-02-08,TaskCard Redesign,"Redesigned TaskCard component with HeroUI, added value-over-time chart and improved UX","1. HeroUI's tv utility enables consistent component styling variants
+2. Recharts integration provides valuable data visualization
+3. Separation of styling from logic improves maintainability
+4. Status-based styling enhances visual feedback
+5. Dropdown menus improve mobile usability"
+2024-02-08,Tailwind HeroUI Fix,"Fixed Tailwind CSS and PostCSS configuration for HeroUI integration","1. HeroUI plugin name changed from heroui to nextui in configuration
+2. PostCSS config needs to reference correct Tailwind config file extension
+3. Windows PowerShell requires semicolon for command chaining
+4. Proper dependency installation order matters for configuration
+5. Configuration changes require development server restart"
+2024-02-08,HeroUI Plugin Fix,"Corrected HeroUI plugin configuration to use heroui instead of nextui","1. HeroUI plugin should use heroui() not nextui()
+2. Package name (@heroui/react) remains the same
+3. Configuration naming is important for plugin initialization
+4. Double-check plugin function names when migrating libraries
+5. Keep documentation updated with correct plugin usage"
+2024-02-08,Tailwind Configuration Fix,"Fixed Tailwind CSS setup by correcting PostCSS configuration and package dependencies","1. PostCSS config needs correct plugin names (tailwindcss and autoprefixer)
+2. Remove unnecessary packages like @tailwindcss/cli
+3. Update to latest compatible versions of postcss and tailwindcss
+4. Verify proper Tailwind imports in index.css
+5. Document proper Tailwind setup in frontend documentation"
+2024-02-08,Tailwind and HeroUI Integration Fix,"Fixed Tailwind CSS and HeroUI integration by updating configuration files and dependencies","1. Keep PostCSS config in CommonJS format when using ES modules in package.json
+2. Ensure proper HeroUI theme configuration in Tailwind config
+3. Install latest versions of Tailwind and PostCSS dependencies
+4. Configure Vite to use the correct PostCSS config path
+5. Add proper color palette configuration for HeroUI integration"
+2024-02-08,HeroUI Styling and Documentation,"Updated HeroUI components with proper styling and documented theme configuration","1. HeroUI components require specific props (onPress instead of onClick)
+2. Theme configuration needs to be properly structured in tailwind.config.js
+3. Custom color palettes should include DEFAULT and foreground values
+4. Dark mode configuration requires specific class structure
+5. Documentation should include practical examples of theme usage" 

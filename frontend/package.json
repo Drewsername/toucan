@@ -14,14 +14,20 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
+    "@heroui/react": "^2.6.14",
+    "@heroui/theme": "^2.4.6",
+    "@iconify/react": "^5.2.0",
+    "@nextui-org/react": "^2.6.11",
     "@supabase/auth-ui-react": "0.4.7",
     "@supabase/auth-ui-shared": "0.1.8",
     "@supabase/supabase-js": "2.39.7",
     "@types/axios": "^0.14.4",
     "axios": "^1.7.9",
+    "framer-motion": "^12.4.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-router-dom": "6.22.0",
+    "recharts": "^2.15.1",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
@@ -35,12 +41,15 @@
     "@typescript-eslint/eslint-plugin": "6.21.0",
     "@typescript-eslint/parser": "6.21.0",
     "@vitejs/plugin-react": "4.2.1",
+    "autoprefixer": "^10.4.17",
     "esbuild": "0.18.20",
     "eslint-plugin-react-hooks": "4.6.0",
     "eslint-plugin-react-refresh": "0.4.5",
     "jsdom": "^26.0.0",
     "msw": "^2.7.0",
+    "postcss": "^8.4.35",
     "rollup": "3.29.5",
+    "tailwindcss": "^3.4.1",
     "typescript": "5.2.2",
     "vite": "4.5.9",
     "vitest": "^3.0.5"

@@ -1,0 +1,82 @@
+---
+sidebar_position: 2
+---
+
+# Models
+
+## Task Models
+
+### Overview
+The task system uses a layered model approach to handle task creation and management:
+
+1. `TaskCreate` - Public model for task creation requests
+2. `TaskBase` - Internal model for database representation
+3. `Task` - Business logic class
+
+### TaskCreate Model
+Used for validating incoming task creation requests:
+
+```python
+class TaskCreate(BaseModel):
+    title: str
+    description: str
+    points: int
+    validation_required: bool = False
+    random_payout: bool = False
+    min_points: Optional[int] = None
+    max_points: Optional[int] = None
+    due_date: Optional[datetime] = None
+```
+
+#### Validation Rules
+- Points must be non-negative
+- If `random_payout` is True:
+  - `min_points` and `max_points` are required
+  - Both must be non-negative
+
+### Task Class
+Business logic class that handles:
+- Task creation and validation
+- User pairing checks
+- Points calculation and awarding
+- Task completion logic
+
+#### Key Methods
+- `from_create_request`: Creates a Task from a TaskCreate model
+- `save`: Persists task to database with validation
+- `complete`: Handles task completion and point awarding
+- `get_active_tasks`: Retrieves active tasks for a user
+
+### Example Usage
+
+```python
+# Create a task
+task_data = TaskCreate(
+    title="Clean dishes",
+    description="Please clean all dishes",
+    points=10
+)
+task = Task.from_create_request(task_data, creator, assignee)
+await task.save()
+
+# Complete a task
+task = await Task.get_by_id(task_id, current_user)
+await task.complete(current_user)
+```
+
+## Best Practices
+
+1. **Input Validation**
+   - Always use `TaskCreate` for incoming requests
+   - Let Pydantic handle validation
+   - Add business logic validation in Task class
+
+2. **Security**
+   - Always validate user relationships
+   - Check task ownership/assignment
+   - Validate points and completion rules
+
+3. **Points System**
+   - Handle random payouts carefully
+   - Validate point ranges
+   - Ensure atomic point updates 

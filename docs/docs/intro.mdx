@@ -1,0 +1,128 @@
+---
+sidebar_position: 1
+---
+
+# Introduction
+
+Welcome to the Toucan documentation! This documentation is intended for developers working on the Toucan app, a gamified couple task and favor management system.
+
+## Quick Links
+
+### Backend
+- [Database Layer](backend/database) - Database architecture and Supabase integration
+- [Models](backend/models) - Data models and business logic
+- [Authentication](backend/authentication) - User authentication and authorization
+- [API Reference](backend/api) - API endpoints and usage
+
+### Frontend
+- [Architecture](frontend/architecture) - Frontend application structure
+- [State Management](frontend/state-management) - Zustand stores and state handling
+- [Components](frontend/components) - React component documentation
+
+### Infrastructure
+- [Deployment](infrastructure/deployment) - Railway deployment setup
+- [Monitoring](infrastructure/monitoring) - Application monitoring and logging
+
+### Development
+- [Setup Guide](development/setup) - Getting started with development
+- [Workflow](development/workflow) - Development practices and guidelines
+- [Testing](development/testing) - Testing strategies and tools
+
+## Tech Stack
+
+### Backend
+- **Python**: Core language
+- **FastAPI**: Web framework
+- **Poetry**: Dependency management
+- **Supabase**: Database and authentication
+
+### Frontend
+- **React**: UI framework
+- **TypeScript**: Type-safe JavaScript
+- **Vite**: Build tool
+- **Zustand**: State management
+
+### Infrastructure
+- **Railway**: Deployment platform
+- **Supabase**: Database hosting
+- **Google OAuth**: Authentication provider
+
+## Getting Started
+
+### Prerequisites
+- Python 3.8+
+- Node.js 16+
+- Poetry
+- Supabase account
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/toucan/toucan.git
+cd toucan
+```
+
+2. Install backend dependencies:
+```bash
+cd backend
+poetry install
+```
+
+3. Install frontend dependencies:
+```bash
+cd frontend
+npm install
+```
+
+4. Set up environment variables:
+```bash
+# Backend (.env)
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+FRONTEND_URL=http://localhost:5173
+
+# Frontend (.env)
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
+VITE_API_URL=http://localhost:8000
+```
+
+### Development
+
+1. Start the backend server:
+```bash
+cd backend
+poetry run uvicorn main:app --reload
+```
+
+2. Start the frontend development server:
+```bash
+cd frontend
+npm run dev
+```
+
+## Project Structure
+
+```
+toucan/
+├── backend/
+│   ├── models/        # Database models and business logic
+│   ├── routers/       # API endpoints
+│   ├── lib/           # Shared utilities
+│   └── main.py        # Application entry point
+├── frontend/
+│   ├── src/
+│   │   ├── components/  # React components
+│   │   ├── store/       # Zustand stores
+│   │   └── types/       # TypeScript types
+│   └── vite.config.ts
+└── docs/              # Documentation (you are here)
+```
+
+## Contributing
+
+1. Create a new branch for your feature
+2. Make your changes
+3. Update documentation if necessary
+4. Submit a pull request 

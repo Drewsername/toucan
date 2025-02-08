@@ -1,0 +1,127 @@
+# UI Components
+
+## HeroUI Integration
+
+The project uses [HeroUI](https://www.heroui.com/) (formerly NextUI) as its primary UI component library. HeroUI provides a set of accessible, customizable, and beautiful components that follow modern design principles.
+
+### Setup
+
+The project has HeroUI configured with the following setup:
+
+1. **Dependencies**:
+   ```bash
+   npm install @heroui/react @heroui/themes framer-motion
+   ```
+
+2. **Tailwind CSS Configuration** (`tailwind.config.js`):
+   ```javascript
+   const { heroui } = require("@heroui/themes")
+
+   module.exports = {
+     content: [
+       "./index.html",
+       "./src/**/*.{js,ts,jsx,tsx}",
+       "./node_modules/@heroui/react/dist/**/*.{js,ts,jsx,tsx}"
+     ],
+     theme: {
+       extend: {},
+     },
+     darkMode: "class",
+     plugins: [heroui()],
+   }
+   ```
+
+3. **Provider Setup** (`App.tsx`):
+   ```tsx
+   import { HeroUIProvider } from '@heroui/react'
+
+   function App() {
+     return (
+       <HeroUIProvider>
+         {/* Your app content */}
+       </HeroUIProvider>
+     )
+   }
+   ```
+
+### Usage
+
+To use HeroUI components in your React components:
+
+1. Import the desired component from @heroui/react:
+   ```tsx
+   import { Button } from "@heroui/react"
+   ```
+
+2. Use the component in your JSX:
+   ```tsx
+   <Button color="primary">
+     Click me
+   </Button>
+   ```
+
+### Theme Customization
+
+HeroUI themes can be customized through the `tailwind.config.js` file. The default theme is already set up, but you can extend it by modifying the `theme.extend` object in the configuration.
+
+### Resources
+
+- [HeroUI Documentation](https://www.heroui.com/docs)
+- [HeroUI Components](https://www.heroui.com/docs/components)
+- [HeroUI Themes](https://www.heroui.com/docs/themes)
+
+## Theme Configuration
+
+The application uses HeroUI (formerly NextUI) with a custom theme called "toucan". The theme includes custom color palettes for:
+- Primary (red/burgundy)
+- Success (green)
+- Info (blue)
+- Warning (yellow/gold)
+- Danger (red)
+
+### Using Theme Colors
+
+Colors can be accessed using Tailwind classes:
+
+```tsx
+// Background colors
+<div className="bg-primary-500">...</div>
+<div className="bg-success-500">...</div>
+
+// Text colors
+<div className="text-primary-500">...</div>
+<div className="text-danger-500">...</div>
+```
+
+### Components
+
+#### TaskCard
+
+The TaskCard component displays task information and provides action buttons for task completion and validation.
+
+```tsx
+import { Card, Button } from "@heroui/react";
+
+<TaskCard
+  task={taskData}
+  isAssignee={true}
+  status="active"
+/>
+```
+
+Props:
+- `task`: Task object containing title, description, points, etc.
+- `isAssignee`: Boolean indicating if current user is assigned to the task
+- `status`: One of 'active' | 'completed' | 'cancelled'
+
+Features:
+- Displays task title, points, and description
+- Shows due date if present
+- Provides Complete button for assignees of active tasks
+- Provides Validate button for admins on completed tasks that require validation
+- Includes confirmation modal for actions
+- Handles loading states and errors
+
+### Dark Mode
+
+The application supports dark mode through HeroUI's theming system. Dark mode classes are automatically applied based on the theme configuration. 

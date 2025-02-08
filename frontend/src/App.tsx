@@ -1,22 +1,35 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { Session, AuthChangeEvent } from '@supabase/supabase-js'
-import { supabase } from './supabaseClient'
 import AuthComponent from './components/Auth'
 import AuthCallback from './components/AuthCallback'
 import AuthError from './components/AuthError'
 import PairingScreen from './components/PairingScreen'
 import HomeScreen from './components/HomeScreen'
 import { useAuthStore } from './store/authStore'
+import { useTaskStore } from './store/taskStore'
 import logo from './assets/Transparent Logo.svg'
-import './App.css'
+import './tailwind.css'
+import { Button } from "@heroui/react"
 
 function App() {
   const { session, loading, profile, initialize } = useAuthStore()
+  const { subscribe, unsubscribe } = useTaskStore()
 
   useEffect(() => {
     initialize()
   }, [])
+
+  // Set up Supabase subscriptions at app level
+  useEffect(() => {
+    if (session) {
+      console.log('Setting up app-level subscriptions')
+      subscribe()
+      return () => {
+        console.log('Cleaning up app-level subscriptions')
+        unsubscribe()
+      }
+    }
+  }, [session?.access_token])
 
   // Show loading screen until we have both session and profile (if logged in)
   if (loading || (session && !profile)) {
@@ -42,52 +55,52 @@ function App() {
   }
 
   return (
-    <Router>
-      <div className="app">
-        <header style={{
-          padding: '1rem',
-          display: 'flex',
-          justifyContent: 'center',
-          borderBottom: '1px solid #e5e7eb'
-        }}>
-          <img 
-            src={logo} 
-            alt="Toucan Logo" 
-            style={{ 
-              width: '20REM'
-            }} 
-          />
-        </header>
-        <Routes>
-          <Route 
-            path="/auth/callback" 
-            element={<AuthCallback />} 
-          />
-          <Route 
-            path="/auth/error" 
-            element={<AuthError />} 
-          />
-          <Route 
-            path="/login" 
-            element={!session ? <AuthComponent /> : <Navigate to="/" />} 
-          />
-          <Route 
-            path="/" 
-            element={
-              session ? (
-                profile?.paired ? (
-                  <HomeScreen />
+      <Router>
+        <div className="app">
+          <header style={{
+            padding: '1rem',
+            display: 'flex',
+            justifyContent: 'center',
+            borderBottom: '1px solid #e5e7eb'
+          }}>
+            <img 
+              src={logo} 
+              alt="Toucan Logo" 
+              style={{ 
+                width: '20REM'
+              }} 
+            />
+          </header>
+          <Routes>
+            <Route 
+              path="/auth/callback" 
+              element={<AuthCallback />} 
+            />
+            <Route 
+              path="/auth/error" 
+              element={<AuthError />} 
+            />
+            <Route 
+              path="/login" 
+              element={!session ? <AuthComponent /> : <Navigate to="/" />} 
+            />
+            <Route 
+              path="/" 
+              element={
+                session ? (
+                  profile?.paired ? (
+                    <HomeScreen />
+                  ) : (
+                    <PairingScreen />
+                  )
                 ) : (
-                  <PairingScreen />
+                  <Navigate to="/login" />
                 )
-              ) : (
-                <Navigate to="/login" />
-              )
-            } 
-          />
-        </Routes>
-      </div>
-    </Router>
+              } 
+            />
+          </Routes>
+        </div>
+      </Router>
   )
 }
 

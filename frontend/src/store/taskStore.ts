@@ -17,6 +17,7 @@ export interface Task {
   min_points?: number
   max_points?: number
   due_date?: string
+  validated?: boolean
 }
 
 interface TaskState {
@@ -28,6 +29,7 @@ interface TaskState {
   fetchTasks: () => Promise<void>
   createTask: (taskData: Omit<Task, 'id' | 'creator_id' | 'assignee_id' | 'status'>) => Promise<boolean>
   completeTask: (taskId: string) => Promise<boolean>
+  validateTask: (taskId: string) => Promise<boolean>
   deleteTask: (taskId: string) => Promise<boolean>
   subscribe: () => void
   unsubscribe: () => void
@@ -110,6 +112,38 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
       console.error('Error completing task:', error)
       // Revert optimistic update
       set({ tasks: currentTasks, error: 'Failed to complete task' })
+      return false
+    }
+  },
+
+  validateTask: async (taskId: string) => {
+    const { session } = useAuthStore.getState()
+    if (!session) return false
+
+    // Optimistic update
+    const currentTasks = get().tasks
+    const taskIndex = currentTasks.findIndex(t => t.id === taskId)
+    if (taskIndex !== -1) {
+      const updatedTasks = [...currentTasks]
+      updatedTasks[taskIndex] = { ...updatedTasks[taskIndex], validated: true }
+      set({ tasks: updatedTasks })
+    }
+
+    try {
+      await axios.post(
+        `${API_URL}/tasks/${taskId}/validate`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`
+          }
+        }
+      )
+      return true
+    } catch (error) {
+      console.error('Error validating task:', error)
+      // Revert optimistic update
+      set({ tasks: currentTasks, error: 'Failed to validate task' })
       return false
     }
   },

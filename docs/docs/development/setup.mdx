@@ -1,0 +1,126 @@
+---
+sidebar_position: 1
+---
+
+# Development Setup
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Python 3.8+**
+- **Node.js 16+**
+- **Poetry** (Python dependency management)
+- **Git**
+- **VS Code** (recommended)
+
+## Initial Setup
+
+1. **Clone the Repository**
+```bash
+git clone https://github.com/toucan/toucan.git
+cd toucan
+```
+
+2. **Backend Setup**
+```bash
+# Install Python dependencies
+cd backend
+poetry install
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your credentials
+```
+
+3. **Frontend Setup**
+```bash
+# Install Node dependencies
+cd frontend
+npm install
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your credentials
+```
+
+## Environment Variables
+
+### Backend (.env)
+```bash
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+FRONTEND_URL=http://localhost:5173
+PORT=8000
+```
+
+### Frontend (.env)
+```bash
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
+VITE_API_URL=http://localhost:8000
+```
+
+## Development Workflow
+
+1. **Start Backend Server**
+```bash
+cd backend
+poetry run uvicorn main:app --reload
+```
+
+2. **Start Frontend Development Server**
+```bash
+cd frontend
+npm run dev
+```
+
+3. **Run Tests**
+```bash
+# Backend tests
+cd backend
+poetry run pytest
+
+# Frontend tests
+cd frontend
+npm test
+```
+
+## VS Code Setup
+
+### Recommended Extensions
+- Python
+- Pylance
+- ESLint
+- Prettier
+- Tailwind CSS IntelliSense
+- GitLens
+
+### Workspace Settings
+```json
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "python.formatting.provider": "black",
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": true
+}
+```
+
+## Common Issues
+
+### Backend
+- **Database Connection**: Ensure Supabase credentials are correct
+- **Poetry Environment**: Run `poetry shell` to activate environment
+- **Port Conflict**: Change PORT in .env if 8000 is in use
+
+### Frontend
+- **Node Version**: Use nvm to manage Node versions
+- **Build Errors**: Clear node_modules and reinstall
+- **API Connection**: Check VITE_API_URL matches backend
+
+## Next Steps
+
+1. Read the [Development Workflow](./workflow) guide
+2. Set up your [Testing Environment](./testing)
+3. Review the [Architecture Documentation](../frontend/architecture)
