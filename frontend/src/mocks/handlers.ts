@@ -1,7 +1,11 @@
 import { http, HttpResponse } from 'msw'
 import type { Task, Offer, Profile } from '../types'
 
-const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// Get base API URL and ensure HTTPS in production
+let baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+if (import.meta.env.PROD && !baseUrl.startsWith('https://')) {
+  baseUrl = baseUrl.replace('http://', 'https://')
+}
 
 // Mock data
 const mockProfile: Profile = {

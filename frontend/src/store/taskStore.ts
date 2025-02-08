@@ -36,7 +36,11 @@ interface TaskState {
   cleanup: () => void
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// Get base API URL and ensure HTTPS in production
+let API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+if (import.meta.env.PROD && !API_URL.startsWith('https://')) {
+  API_URL = API_URL.replace('http://', 'https://')
+}
 
 // Create an axios instance with default config
 const api = axios.create({
