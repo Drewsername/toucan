@@ -28,37 +28,14 @@ logger.info(f"Port: {port}")
 logger.info(f"Project: {os.getenv('RAILWAY_PROJECT_NAME', 'local')}")
 logger.info(f"Environment: {os.getenv('RAILWAY_ENVIRONMENT_NAME', 'development')}")
 
-# Configure CORS with explicit origins
-allowed_origins = [
-    frontend_url,  # Development frontend
-    "https://toucan-backend-production.up.railway.app",  # Explicit Railway domain
-    "https://www.get-toucan.com",  # Production www
-    "https://get-toucan.com",  # Production apex
-    "https://healthcheck.railway.app",  # Railway healthcheck
-]
-
-# Add localhost for development
-if os.getenv("RAILWAY_ENVIRONMENT_NAME") != "production":
-    allowed_origins.extend([
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000",
-    ])
-
-# Log allowed origins for debugging
-logger.info("Allowed CORS origins:")
-for origin in allowed_origins:
-    logger.info(f"  - {origin}")
-
+# Configure CORS - temporarily allow all origins for debugging
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
+    allow_origins=["*"],  # Temporarily allow all origins
+    allow_credentials=False,  # Must be False when using allow_origins=["*"]
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"],  # Added to expose all headers
-    max_age=3600,  # Cache preflight requests for 1 hour
+    expose_headers=["*"],
 )
 
 # Include routers
