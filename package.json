@@ -1,4 +1,22 @@
 {
+  "name": "toucan",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "docs"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w frontend",
+    "build": "npm run build -w frontend",
+    "serve": "npm run serve -w frontend",
+    "docs:dev": "npm run start -w docs",
+    "docs:build": "npm run build -w docs",
+    "docs:serve": "npm run serve -w docs"
+  },
+  "engines": {
+    "node": "18.20.5"
+  },
   "devDependencies": {
     "autoprefixer": "^10.4.20",
     "postcss": "^8.5.1",
