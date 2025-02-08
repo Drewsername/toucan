@@ -10,12 +10,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   realtime: {
     params: {
-      eventsPerSecond: 1,
-      heartbeat: 60,
+      eventsPerSecond: 2,
+      heartbeat: 15,  // Check connection every 15 seconds
       reconnectAfterMs: (retryCount: number) => {
-        // Start with 1s delay, max 15s delay
-        const baseDelay = 1000
-        const maxDelay = 15000
+        // Start with 0.5s delay, max 10s delay
+        const baseDelay = 500
+        const maxDelay = 10000
         const delay = Math.min(baseDelay * Math.pow(2, retryCount), maxDelay)
         return delay
       }
