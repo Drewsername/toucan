@@ -8,6 +8,8 @@ import sys
 from dotenv import load_dotenv
 import traceback
 import datetime
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp
 
 # Configure logging
 logging.basicConfig(
@@ -20,8 +22,22 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 
+class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app: ASGIApp):
+        super().__init__(app)
+
+    async def dispatch(self, request: Request, call_next):
+        if os.environ.get("ENVIRONMENT") == "production":
+            if request.url.scheme == "http":
+                https_url = str(request.url).replace("http://", "https://", 1)
+                return RedirectResponse(https_url, status_code=301)
+        return await call_next(request)
+
 # Create FastAPI app instance
 app = FastAPI()
+
+# Add HTTPS redirect middleware in production
+app.add_middleware(HTTPSRedirectMiddleware)
 
 # Define allowed origins
 origins = [
