@@ -58,11 +58,8 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
     try {
       const response = await axios.get(`${API_URL}/tasks/active`, {
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        withCredentials: true
+          Authorization: `Bearer ${session.access_token}`
+        }
       })
       set({ tasks: response.data, loading: false, error: null })
     } catch (error) {
@@ -93,11 +90,8 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
         taskData,
         {
           headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          withCredentials: true
+            Authorization: `Bearer ${session.access_token}`
+          }
         }
       )
       return true
@@ -127,11 +121,8 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
         {},
         {
           headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          withCredentials: true
+            Authorization: `Bearer ${session.access_token}`
+          }
         }
       )
       return true
@@ -162,11 +153,8 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
         {},
         {
           headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          withCredentials: true
+            Authorization: `Bearer ${session.access_token}`
+          }
         }
       )
       return true
@@ -191,11 +179,8 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
         `${API_URL}/tasks/${taskId}`,
         {
           headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          withCredentials: true
+            Authorization: `Bearer ${session.access_token}`
+          }
         }
       )
       return true
