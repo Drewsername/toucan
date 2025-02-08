@@ -32,5 +32,20 @@ export default defineConfig({
   base: '/',
   css: {
     postcss: './postcss.config.mjs'
+  },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: true,
+    minify: 'terser',
+    target: 'esnext',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui': ['@heroui/react', '@heroui/theme', 'framer-motion'],
+        }
+      }
+    }
   }
 })
