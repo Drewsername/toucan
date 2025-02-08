@@ -61,6 +61,11 @@ api.interceptors.request.use(
     if (config.headers) {
       config.headers['Accept'] = 'application/json';
       config.headers['Content-Type'] = 'application/json';
+      // Add Authorization header if it exists
+      const { session } = useAuthStore.getState();
+      if (session?.access_token) {
+        config.headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
     }
 
     console.log('🚀 Request:', {
@@ -94,12 +99,14 @@ api.interceptors.response.use(
       config: {
         url: response.config.url,
         method: response.config.method,
-        baseURL: response.config.baseURL
+        baseURL: response.config.baseURL,
+        headers: response.config.headers
       }
     });
     return response;
   },
   (error) => {
+    // Log the full error details
     console.error('❌ Response Error:', {
       message: error.message,
       name: error.name,
@@ -117,6 +124,20 @@ api.interceptors.response.use(
         timeout: error.config?.timeout
       }
     });
+
+    // If it's a CORS error or network error, log additional details
+    if (error.message === 'Network Error' || error.code === 'ERR_NETWORK') {
+      console.error('Network/CORS Error Details:', {
+        isCORS: error.message.includes('CORS'),
+        isPreflightError: error.response?.status === 502,
+        originalRequest: {
+          method: error.config?.method,
+          url: error.config?.url,
+          headers: error.config?.headers
+        }
+      });
+    }
+
     return Promise.reject(error);
   }
 );
@@ -142,21 +163,17 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
     set({ loading: true, error: null })
 
     try {
-      const response = await api.get('/tasks/active', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
-      })
+      const response = await api.get('/tasks/active')
       set({ tasks: response.data, loading: false, error: null })
     } catch (error) {
       console.error('Error fetching tasks:', error)
       
-      // Retry logic
+      // Retry logic with exponential backoff
       if (retryCount < MAX_RETRIES) {
-        console.log(`Retrying fetch tasks (attempt ${retryCount + 1} of ${MAX_RETRIES})...`)
-        setTimeout(() => {
-          get().fetchTasks(retryCount + 1)
-        }, RETRY_DELAY * (retryCount + 1))
+        const backoffDelay = RETRY_DELAY * Math.pow(2, retryCount);
+        console.log(`Retrying fetch tasks (attempt ${retryCount + 1} of ${MAX_RETRIES}) after ${backoffDelay}ms...`);
+        await delay(backoffDelay);
+        return get().fetchTasks(retryCount + 1);
       } else {
         set({ 
           error: 'Failed to fetch tasks',
