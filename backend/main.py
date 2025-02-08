@@ -21,6 +21,7 @@ app = FastAPI()
 
 @app.middleware("http")
 async def add_cors_headers(request: Request, call_next):
+    logger.info(f"Request headers: {dict(request.headers)}")
     # Handle preflight requests
     if request.method == "OPTIONS":
         response = Response()
@@ -28,6 +29,7 @@ async def add_cors_headers(request: Request, call_next):
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, HEAD"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, Origin, X-Requested-With"
         response.headers["Access-Control-Allow-Credentials"] = "true"
+        logger.info(f"Response headers (OPTIONS): {dict(response.headers)}")
         return response
 
     # Handle actual requests
@@ -36,6 +38,7 @@ async def add_cors_headers(request: Request, call_next):
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, HEAD"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, Origin, X-Requested-With"
     response.headers["Access-Control-Allow-Credentials"] = "true"
+    logger.info(f"Response headers: {dict(response.headers)}")
     return response
 
 # Include routers
