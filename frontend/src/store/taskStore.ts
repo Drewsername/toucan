@@ -36,18 +36,10 @@ interface TaskState {
   cleanup: () => void
 }
 
-// Get base API URL and ensure HTTPS in production
-const API_URL = (() => {
-  const url = import.meta.env.PROD 
-    ? 'https://toucan-backend-production.up.railway.app'
-    : 'http://localhost:8000'
-  
-  // Double-check HTTPS enforcement
-  if (import.meta.env.PROD && !url.startsWith('https://')) {
-    throw new Error('Production API URL must use HTTPS')
-  }
-  return url
-})()
+// Get base API URL based on environment
+const API_URL = import.meta.env.DEV 
+  ? 'http://localhost:8000' 
+  : 'https://toucan-backend-production.up.railway.app'
 
 // Create an axios instance with default config
 const api = axios.create({
@@ -57,24 +49,14 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  // Ensure proper CORS handling
   validateStatus: function (status) {
-    return status >= 200 && status < 500; // Handle all responses except server errors
+    return status >= 200 && status < 500;
   },
-  // Add timeout
   timeout: 10000,
 })
 
-// Add request interceptor for HTTPS enforcement
+// Add request interceptor for logging
 api.interceptors.request.use((config) => {
-  // Ensure HTTPS in production for all requests
-  if (import.meta.env.PROD && config.url) {
-    const fullUrl = new URL(config.url, config.baseURL)
-    if (fullUrl.protocol !== 'https:') {
-      config.url = fullUrl.toString().replace('http:', 'https:')
-    }
-  }
-
   if (config.headers) {
     config.headers['Accept'] = 'application/json'
     config.headers['Content-Type'] = 'application/json'
@@ -84,13 +66,13 @@ api.interceptors.request.use((config) => {
     }
   }
 
+  // Log the actual URL being used
+  const fullUrl = new URL(config.url || '', config.baseURL)
   console.log('🚀 Request:', {
     method: config.method?.toUpperCase(),
-    url: config.url,
+    fullUrl: fullUrl.toString(),
     headers: config.headers,
     data: config.data,
-    withCredentials: config.withCredentials,
-    baseURL: config.baseURL
   })
   return config
 }, (error) => {
