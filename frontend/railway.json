@@ -13,13 +13,6 @@
     "healthcheckPath": "/",
     "healthcheckTimeout": 100,
     "healthcheckInterval": 30,
-    "routes": [
-      {
-        "path": "/api/(.*)",
-        "service": "toucan-backend-production",
-        "rewrite": "/$1"
-      }
-    ],
     "env": {
       "NODE_ENV": "production",
       "VITE_SUPABASE_URL": "https://oeljcmhlomgdhencufwj.supabase.co",
