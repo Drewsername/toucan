@@ -1,0 +1,154 @@
+---
+sidebar_position: 2
+---
+
+# State Management
+
+## Overview
+Toucan uses Zustand for state management, providing a simple and efficient way to handle application state. The system is designed to work seamlessly with Supabase Realtime for live updates.
+
+## Store Structure
+
+### Task Store
+The task store manages task data and Realtime subscriptions:
+
+```typescript
+interface TaskState {
+  tasks: Task[]
+  loading: boolean
+  error: string | null
+  subscribed: boolean
+  channel: RealtimeChannel | null
+  fetchTasks: () => Promise<void>
+  createTask: (taskData: TaskCreate) => Promise<boolean>
+  completeTask: (taskId: string) => Promise<boolean>
+  deleteTask: (taskId: string) => Promise<boolean>
+  subscribe: () => void
+  unsubscribe: () => void
+}
+```
+
+Key features:
+- Optimistic updates for better UX
+- Realtime subscription management
+- Error handling and state recovery
+- Automatic reconnection
+
+### Auth Store
+Manages authentication state and user profiles:
+
+```typescript
+interface AuthState {
+  session: Session | null
+  user: User | null
+  profile: Profile | null
+  partner: Profile | null
+  loading: boolean
+  initialized: boolean
+  // ... methods
+}
+```
+
+### Notification Store
+Handles system notifications with Realtime updates:
+
+```typescript
+interface NotificationState {
+  notifications: Notification[]
+  loading: boolean
+  error: string | null
+  subscribed: boolean
+  // ... methods
+}
+```
+
+## State Updates
+
+### Optimistic Updates
+The system uses optimistic updates for better user experience:
+
+```typescript
+const deleteTask = async (taskId: string) => {
+  // Optimistic update
+  const currentTasks = get().tasks
+  set({ tasks: currentTasks.filter(t => t.id !== taskId) })
+
+  try {
+    await api.deleteTask(taskId)
+  } catch (error) {
+    // Revert on failure
+    set({ tasks: currentTasks })
+  }
+}
+```
+
+### Realtime Integration
+State is automatically updated through Realtime subscriptions. See [Realtime Updates](./realtime) for details.
+
+## Best Practices
+
+1. **State Organization**
+   - Keep stores focused and minimal
+   - Use selectors for derived state
+   - Implement proper cleanup
+
+2. **Error Handling**
+   - Implement error recovery
+   - Provide user feedback
+   - Log errors appropriately
+
+3. **Performance**
+   - Use shallow equality checks
+   - Implement proper memoization
+   - Avoid unnecessary updates
+
+4. **Testing**
+   - Test store operations
+   - Mock Realtime events
+   - Verify state transitions
+
+## Common Patterns
+
+### Store Initialization
+```typescript
+useEffect(() => {
+  initialize()
+}, [])
+```
+
+### Subscription Management
+```typescript
+useEffect(() => {
+  if (session) {
+    subscribe()
+    return () => unsubscribe()
+  }
+}, [session?.access_token])
+```
+
+### Error Recovery
+```typescript
+try {
+  await operation()
+} catch (error) {
+  set({ error: 'Operation failed' })
+  // Implement recovery logic
+}
+```
+
+## Debugging
+
+1. **State Inspection**
+   - Use browser dev tools
+   - Monitor Realtime events
+   - Check store snapshots
+
+2. **Common Issues**
+   - State synchronization
+   - Subscription lifecycle
+   - Error handling
+
+3. **Performance**
+   - Component re-renders
+   - State update batching
+   - Memory leaks

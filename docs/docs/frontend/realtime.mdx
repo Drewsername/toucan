@@ -1,0 +1,194 @@
+---
+sidebar_position: 4
+---
+
+# Realtime Updates
+
+## Overview
+Toucan uses Supabase Realtime for live updates across the application. This ensures that users see changes to tasks and other data immediately, without needing to refresh the page.
+
+## Implementation
+
+### Database Setup
+Realtime functionality requires specific database configuration:
+
+```sql
+-- Enable realtime for tasks table
+ALTER PUBLICATION supabase_realtime ADD TABLE tasks;
+
+-- Enable replication on tasks table
+ALTER TABLE tasks REPLICA IDENTITY FULL;
+```
+
+### Client Configuration
+The Supabase client is configured with Realtime support:
+
+```typescript
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
+  },
+  auth: {
+    persistSession: true,
+    detectSessionInUrl: true
+  },
+  db: {
+    schema: 'public'
+  }
+})
+```
+
+### Subscription Management
+Realtime subscriptions are managed at the component level for proper cleanup:
+
+```typescript
+// In TaskList.tsx
+const { subscribe, cleanup } = useTaskStore()
+
+useEffect(() => {
+  if (profile) {
+    subscribe()
+    return () => {
+      // Clean up subscriptions and state when component unmounts
+      cleanup()
+    }
+  }
+}, [profile?.id])
+```
+
+### Channel Configuration
+Each Realtime channel is configured with broadcast and presence support:
+
+```typescript
+const channel = supabase.channel('tasks-channel', {
+  config: {
+    broadcast: { self: true },
+    presence: { key: 'tasks' },
+  }
+})
+```
+
+### Event Handling
+The system handles three types of database events:
+
+1. **INSERT**: New tasks are added to the state
+2. **UPDATE**: Existing tasks are updated in place
+3. **DELETE**: Tasks are removed from the state
+
+```typescript
+channel.on(
+  'postgres_changes',
+  {
+    event: '*',
+    schema: 'public',
+    table: 'tasks'
+  },
+  (payload) => {
+    switch (payload.eventType) {
+      case 'INSERT': {
+        const newTask = payload.new as Task
+        set({ tasks: [...currentTasks, newTask] })
+        break
+      }
+      case 'UPDATE': {
+        const updatedTask = payload.new as Task
+        const taskIndex = currentTasks.findIndex(t => t.id === updatedTask.id)
+        if (taskIndex !== -1) {
+          const updatedTasks = [...currentTasks]
+          updatedTasks[taskIndex] = updatedTask
+          set({ tasks: updatedTasks })
+        }
+        break
+      }
+      case 'DELETE': {
+        const deletedTaskId = payload.old.id
+        set({ tasks: currentTasks.filter(t => t.id !== deletedTaskId) })
+        break
+      }
+    }
+  }
+)
+```
+
+### Connection Management
+The system includes robust connection handling:
+
+1. **Status Tracking**: Monitors subscription status
+2. **Auto-reconnection**: Automatically attempts to reconnect on failure
+3. **State Synchronization**: Fetches initial state after subscription
+4. **Presence**: Tracks user presence for better state management
+5. **Cleanup**: Properly handles component unmounting
+
+```typescript
+// In taskStore.ts
+cleanup: () => {
+  const { unsubscribe } = get()
+  unsubscribe()
+  set({ tasks: [], error: null })
+}
+
+// Track connection status
+channel.subscribe(async (status) => {
+  console.log('Supabase subscription status:', status)
+  if (status === 'SUBSCRIBED') {
+    set({ subscribed: true })
+    await get().fetchTasks()
+  } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+    set({ subscribed: false })
+    // Only attempt reconnection if we haven't cleaned up
+    if (get().channel === channel) {
+      setTimeout(() => {
+        get().subscribe()
+      }, 5000)
+    }
+  }
+})
+```
+
+## Best Practices
+
+1. **Subscription Management**
+   - Handle subscriptions at the component level
+   - Clean up subscriptions on unmount
+   - Reset state when leaving component
+   - Use presence for connection state
+
+2. **State Updates**
+   - Use optimistic updates for better UX
+   - Validate changes against server state
+   - Handle edge cases and errors
+   - Clear state on cleanup
+
+3. **Error Handling**
+   - Implement automatic reconnection
+   - Log connection state changes
+   - Provide fallback mechanisms
+   - Check cleanup state before reconnecting
+
+4. **Performance**
+   - Limit events per second
+   - Use broadcast judiciously
+   - Clean up unused subscriptions
+   - Clear intervals and timeouts
+
+## Troubleshooting
+
+1. **Missing Updates**
+   - Check Realtime is enabled for the table
+   - Verify REPLICA IDENTITY is set to FULL
+   - Check subscription status logs
+   - Verify cleanup isn't preventing updates
+
+2. **Connection Issues**
+   - Verify Supabase configuration
+   - Check authentication state
+   - Monitor browser console for errors
+   - Check component mount status
+
+3. **State Inconsistencies**
+   - Verify optimistic updates
+   - Check event order handling
+   - Validate state synchronization
+   - Ensure proper cleanup on unmount 
