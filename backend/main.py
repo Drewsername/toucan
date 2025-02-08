@@ -21,12 +21,13 @@ app = FastAPI()
 
 # List of allowed origins
 ALLOWED_ORIGINS = [
-    "https://www.get-toucan.com",
-    "https://get-toucan.com",
-    "https://toucan.up.railway.app",
-    "http://localhost:5173",  # Development
+    "https://www.get-toucan.com",  # Production with www
+    "https://get-toucan.com",      # Production without www
+    "https://toucan.up.railway.app",  # Railway domain
+    "http://localhost:5173"        # Development
 ]
 
+logger.info("Starting FastAPI application...")
 logger.info(f"Configured allowed origins: {ALLOWED_ORIGINS}")
 
 @app.middleware("http")
