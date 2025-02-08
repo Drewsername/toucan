@@ -6,10 +6,11 @@ import os
 import logging
 import sys
 from dotenv import load_dotenv
+from typing import List
 
 # Configure logging to output to stdout with more detailed format
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,  # Changed to DEBUG level
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(pathname)s:%(lineno)d',
     handlers=[logging.StreamHandler(sys.stdout)]
 )
@@ -17,52 +18,46 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 
+def get_allowed_origins() -> List[str]:
+    """Get the list of allowed origins from environment or use defaults"""
+    try:
+        # Try to get from environment variable first
+        origins_str = os.getenv("ALLOWED_ORIGINS")
+        if origins_str:
+            origins = origins_str.split(",")
+            logger.debug(f"Loaded origins from environment: {origins}")
+            return [origin.strip() for origin in origins]
+        
+        # Fall back to defaults
+        defaults = [
+            "https://www.get-toucan.com",
+            "https://get-toucan.com",
+            "https://toucan.up.railway.app",
+            "http://localhost:5173"
+        ]
+        logger.debug(f"Using default origins: {defaults}")
+        return defaults
+    except Exception as e:
+        logger.error(f"Error setting up origins: {e}")
+        return ["https://www.get-toucan.com"]  # Fallback to main production URL
+
 app = FastAPI()
 
-# List of allowed origins
-ALLOWED_ORIGINS = [
-    "https://www.get-toucan.com",  # Production with www
-    "https://get-toucan.com",      # Production without www
-    "https://toucan.up.railway.app",  # Railway domain
-    "http://localhost:5173"        # Development
-]
+# Debug log before CORS setup
+logger.debug("Setting up CORS middleware...")
 
-logger.info("Starting FastAPI application...")
-logger.info(f"Configured allowed origins: {ALLOWED_ORIGINS}")
+# Add CORS middleware to the application
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=get_allowed_origins(),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    max_age=3600,
+)
 
-@app.middleware("http")
-async def add_cors_headers(request: Request, call_next):
-    origin = request.headers.get("origin", "")
-    logger.info(f"Incoming request from origin: {origin}")
-    logger.info(f"Request method: {request.method}")
-    logger.info(f"Request headers: {dict(request.headers)}")
-
-    # Handle preflight requests
-    if request.method == "OPTIONS":
-        response = Response()
-        if origin in ALLOWED_ORIGINS:
-            response.headers["Access-Control-Allow-Origin"] = origin
-            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, HEAD"
-            response.headers["Access-Control-Allow-Headers"] = "*"
-            response.headers["Access-Control-Allow-Credentials"] = "true"
-            response.headers["Access-Control-Max-Age"] = "3600"  # Cache preflight for 1 hour
-            logger.info(f"Preflight response headers: {dict(response.headers)}")
-        else:
-            logger.warning(f"Rejected preflight request from unauthorized origin: {origin}")
-        return response
-
-    # Handle actual requests
-    response = await call_next(request)
-    if origin in ALLOWED_ORIGINS:
-        response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, HEAD"
-        response.headers["Access-Control-Allow-Headers"] = "*"
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        logger.info(f"Response headers: {dict(response.headers)}")
-    else:
-        logger.warning(f"Rejected request from unauthorized origin: {origin}")
-    
-    return response
+# Debug log after CORS setup
+logger.debug("CORS middleware setup complete")
 
 # Include routers
 app.include_router(auth.router)
