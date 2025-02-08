@@ -6,6 +6,9 @@ import os
 import logging
 import sys
 from dotenv import load_dotenv
+from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi.middleware.cors import CORSMiddleware
+import json
 
 # Configure logging to output to stdout with more detailed format
 logging.basicConfig(
@@ -17,7 +20,26 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Log request details
+        logger.debug(f"Request: {request.method} {request.url}")
+        logger.debug(f"Client Host: {request.client.host if request.client else 'Unknown'}")
+        logger.debug(f"Headers: {dict(request.headers)}")
+
+        # Process the request and get response
+        response = await call_next(request)
+
+        # Log response details
+        logger.debug(f"Response Status: {response.status_code}")
+        logger.debug(f"Response Headers: {dict(response.headers)}")
+
+        return response
+
 app = FastAPI()
+
+# Add request logging middleware
+app.add_middleware(RequestLoggingMiddleware)
 
 # Debug log before CORS setup
 logger.debug("Setting up CORS middleware...")
@@ -30,7 +52,7 @@ logger.debug(f"Configured allowed origins: {allowed_origins}")
 # Add CORS middleware to the application
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=["*"],  # Temporarily allow all origins for debugging
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,6 +62,25 @@ app.add_middleware(
 
 # Debug log after CORS setup
 logger.debug("CORS middleware setup complete")
+
+@app.options("/{full_path:path}")
+async def options_route(request: Request, full_path: str):
+    """Handle OPTIONS requests explicitly for debugging"""
+    logger.debug(f"OPTIONS request received for path: /{full_path}")
+    logger.debug(f"Request headers: {dict(request.headers)}")
+    
+    origin = request.headers.get("origin")
+    logger.debug(f"Origin header: {origin}")
+    
+    # Return response with CORS headers
+    response = Response()
+    response.headers["Access-Control-Allow-Origin"] = origin or "*"
+    response.headers["Access-Control-Allow-Methods"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    
+    logger.debug(f"Response headers: {dict(response.headers)}")
+    return response
 
 # Include routers
 app.include_router(auth.router)

@@ -47,6 +47,52 @@ const api = axios.create({
   },
 })
 
+// Add request interceptor for logging
+api.interceptors.request.use(
+  (config) => {
+    console.log('🚀 Request:', {
+      method: config.method?.toUpperCase(),
+      url: config.url,
+      headers: config.headers,
+      data: config.data,
+    });
+    return config;
+  },
+  (error) => {
+    console.error('❌ Request Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for logging
+api.interceptors.response.use(
+  (response) => {
+    console.log('✅ Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+      data: response.data,
+    });
+    return response;
+  },
+  (error) => {
+    console.error('❌ Response Error:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      headers: error.response?.headers,
+      data: error.response?.data,
+      config: {
+        url: error.config?.url,
+        method: error.config?.method,
+        headers: error.config?.headers,
+        withCredentials: error.config?.withCredentials,
+      }
+    });
+    return Promise.reject(error);
+  }
+);
+
 // Maximum number of retries for fetching tasks
 const MAX_RETRIES = 3
 const RETRY_DELAY = 1000 // 1 second
