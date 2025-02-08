@@ -7,10 +7,10 @@ import logging
 import sys
 from dotenv import load_dotenv
 
-# Configure logging to output to stdout
+# Configure logging to output to stdout with more detailed format
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(pathname)s:%(lineno)d',
     handlers=[logging.StreamHandler(sys.stdout)]
 )
 logger = logging.getLogger(__name__)
@@ -19,26 +19,48 @@ load_dotenv()
 
 app = FastAPI()
 
+# List of allowed origins
+ALLOWED_ORIGINS = [
+    "https://www.get-toucan.com",
+    "https://get-toucan.com",
+    "https://toucan.up.railway.app",
+    "http://localhost:5173",  # Development
+]
+
+logger.info(f"Configured allowed origins: {ALLOWED_ORIGINS}")
+
 @app.middleware("http")
 async def add_cors_headers(request: Request, call_next):
+    origin = request.headers.get("origin", "")
+    logger.info(f"Incoming request from origin: {origin}")
+    logger.info(f"Request method: {request.method}")
     logger.info(f"Request headers: {dict(request.headers)}")
+
     # Handle preflight requests
     if request.method == "OPTIONS":
         response = Response()
-        response.headers["Access-Control-Allow-Origin"] = "https://www.get-toucan.com"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, HEAD"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, Origin, X-Requested-With"
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        logger.info(f"Response headers (OPTIONS): {dict(response.headers)}")
+        if origin in ALLOWED_ORIGINS:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, HEAD"
+            response.headers["Access-Control-Allow-Headers"] = "*"
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Max-Age"] = "3600"  # Cache preflight for 1 hour
+            logger.info(f"Preflight response headers: {dict(response.headers)}")
+        else:
+            logger.warning(f"Rejected preflight request from unauthorized origin: {origin}")
         return response
 
     # Handle actual requests
     response = await call_next(request)
-    response.headers["Access-Control-Allow-Origin"] = "https://www.get-toucan.com"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, HEAD"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, Origin, X-Requested-With"
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    logger.info(f"Response headers: {dict(response.headers)}")
+    if origin in ALLOWED_ORIGINS:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, HEAD"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        logger.info(f"Response headers: {dict(response.headers)}")
+    else:
+        logger.warning(f"Rejected request from unauthorized origin: {origin}")
+    
     return response
 
 # Include routers
