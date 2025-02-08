@@ -26,7 +26,7 @@ interface TaskState {
   error: string | null
   subscribed: boolean
   channel: RealtimeChannel | null
-  fetchTasks: () => Promise<void>
+  fetchTasks: (retryCount?: number) => Promise<void>
   createTask: (taskData: Omit<Task, 'id' | 'creator_id' | 'assignee_id' | 'status'>) => Promise<boolean>
   completeTask: (taskId: string) => Promise<boolean>
   validateTask: (taskId: string) => Promise<boolean>
@@ -38,6 +38,10 @@ interface TaskState {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
+// Maximum number of retries for fetching tasks
+const MAX_RETRIES = 3
+const RETRY_DELAY = 1000 // 1 second
+
 export const useTaskStore = create<TaskState>()((set, get) => ({
   tasks: [],
   loading: false,
@@ -45,20 +49,37 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
   subscribed: false,
   channel: null,
 
-  fetchTasks: async () => {
+  fetchTasks: async (retryCount = 0) => {
     const { session } = useAuthStore.getState()
     if (!session) return
+
+    set({ loading: true, error: null })
 
     try {
       const response = await axios.get(`${API_URL}/tasks/active`, {
         headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        withCredentials: true
       })
-      set({ tasks: response.data })
+      set({ tasks: response.data, loading: false, error: null })
     } catch (error) {
       console.error('Error fetching tasks:', error)
-      set({ error: 'Failed to fetch tasks' })
+      
+      // Retry logic
+      if (retryCount < MAX_RETRIES) {
+        console.log(`Retrying fetch tasks (attempt ${retryCount + 1} of ${MAX_RETRIES})...`)
+        setTimeout(() => {
+          get().fetchTasks(retryCount + 1)
+        }, RETRY_DELAY * (retryCount + 1))
+      } else {
+        set({ 
+          error: 'Failed to fetch tasks',
+          loading: false
+        })
+      }
     }
   },
 
@@ -67,13 +88,16 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
     if (!session) return false
 
     try {
-      const response = await axios.post(
+      await axios.post(
         `${API_URL}/tasks`,
         taskData,
         {
           headers: {
-            Authorization: `Bearer ${session.access_token}`
-          }
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          withCredentials: true
         }
       )
       return true
@@ -103,8 +127,11 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
         {},
         {
           headers: {
-            Authorization: `Bearer ${session.access_token}`
-          }
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          withCredentials: true
         }
       )
       return true
@@ -135,8 +162,11 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
         {},
         {
           headers: {
-            Authorization: `Bearer ${session.access_token}`
-          }
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          withCredentials: true
         }
       )
       return true
@@ -161,8 +191,11 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
         `${API_URL}/tasks/${taskId}`,
         {
           headers: {
-            Authorization: `Bearer ${session.access_token}`
-          }
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          withCredentials: true
         }
       )
       return true
@@ -239,37 +272,38 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
     channel.subscribe(async (status) => {
       console.log('Supabase subscription status:', status)
       if (status === 'SUBSCRIBED') {
-        set({ subscribed: true })
+        set({ subscribed: true, channel })
         // Initial fetch after subscription is confirmed
         await get().fetchTasks()
       } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+        console.log('Channel closed or error, cleaning up...')
         set({ subscribed: false })
-        // Attempt to resubscribe after a delay
-        setTimeout(() => {
-          // Only resubscribe if we haven't cleaned up
-          if (get().channel === channel) {
-            console.log('Attempting to resubscribe...')
-            get().subscribe()
-          }
-        }, 5000)
+        get().cleanup()
       }
     })
-
-    set({ channel })
   },
 
   unsubscribe: () => {
     const { channel } = get()
     if (channel) {
-      console.log('Unsubscribing from Supabase Realtime...')
+      console.log('Unsubscribing from tasks channel...')
       channel.unsubscribe()
       set({ channel: null, subscribed: false })
     }
   },
 
   cleanup: () => {
-    const { unsubscribe } = get()
-    unsubscribe()
-    set({ tasks: [], error: null })
+    console.log('Cleaning up task store...')
+    const { channel } = get()
+    if (channel) {
+      channel.unsubscribe()
+    }
+    set({
+      channel: null,
+      subscribed: false,
+      tasks: [],
+      loading: false,
+      error: null
+    })
   }
 })) 
