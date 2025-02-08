@@ -50,10 +50,10 @@ const ensureHttps = (url: string) => {
 
 // Create axios instance with environment-specific config
 const api = axios.create({
-  // In development, use the proxy. In production, use api subdomain
+  // In development, use the proxy. In production, use backend subdomain
   baseURL: import.meta.env.DEV 
     ? '/api' 
-    : 'https://api.get-toucan.com',
+    : 'https://backend.get-toucan.com',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
