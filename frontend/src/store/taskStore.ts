@@ -50,8 +50,10 @@ const ensureHttps = (url: string) => {
 
 // Create axios instance with environment-specific config
 const api = axios.create({
-  // In development, use the proxy. In production, use /api prefix
-  baseURL: '/api',
+  // In development, use the proxy. In production, use same domain with port 8000
+  baseURL: import.meta.env.DEV 
+    ? '/api' 
+    : `${window.location.protocol}//${window.location.hostname}:8000`,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -71,7 +73,7 @@ api.interceptors.request.use((config) => {
   }
 
   // Log the full URL being requested
-  const fullUrl = `${window.location.origin}${config.baseURL}${config.url}`
+  const fullUrl = (config.baseURL || '') + (config.url || '')
   console.log('🔍 Making request to:', fullUrl)
   console.log('Request:', {
     url: config.url,
