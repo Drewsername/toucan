@@ -198,7 +198,7 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
 
     try {
       await api.post(
-        '/tasks',
+        '/tasks/',
         taskData,
         {
           headers: {
