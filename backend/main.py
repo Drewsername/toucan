@@ -29,6 +29,8 @@ origins = [
     "https://get-toucan.com",
     "https://toucan.up.railway.app",
     "http://localhost:5173",
+    # Allow internal Railway DNS
+    "http://toucan.railway.internal",
 ]
 
 # Add CORS middleware
@@ -39,29 +41,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Force HTTPS in production
-@app.middleware("http")
-async def force_https(request: Request, call_next):
-    if os.environ.get("ENVIRONMENT") == "production":
-        # Force HTTPS for all production requests
-        if request.url.scheme != "https":
-            https_url = str(request.url).replace("http://", "https://", 1)
-            return RedirectResponse(https_url, status_code=301)
-        
-        # Also check the X-Forwarded-Proto header (used by Railway)
-        forwarded_proto = request.headers.get("x-forwarded-proto")
-        if forwarded_proto and forwarded_proto != "https":
-            https_url = f"https://{request.url.netloc}{request.url.path}"
-            if request.url.query:
-                https_url += f"?{request.url.query}"
-            return RedirectResponse(https_url, status_code=301)
-            
-    response = await call_next(request)
-    # Add HSTS header in production
-    if os.environ.get("ENVIRONMENT") == "production":
-        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    return response
 
 # Include routers
 app.include_router(auth.router)

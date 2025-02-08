@@ -38,14 +38,11 @@ interface TaskState {
 
 // Get base API URL and ensure HTTPS in production
 const API_URL = (() => {
+  // Use Railway's internal DNS in production
   const url = import.meta.env.PROD 
-    ? 'https://toucan-backend-production.up.railway.app'
+    ? 'http://toucan.railway.internal'
     : 'http://localhost:8000'
   
-  // Double-check HTTPS enforcement
-  if (import.meta.env.PROD && !url.startsWith('https://')) {
-    throw new Error('Production API URL must use HTTPS')
-  }
   return url
 })()
 
@@ -65,17 +62,8 @@ const api = axios.create({
   timeout: 10000,
 })
 
-// Add request interceptor for HTTPS enforcement
+// Add request interceptor for logging
 api.interceptors.request.use((config) => {
-  // Ensure HTTPS in production for all requests
-  if (import.meta.env.PROD && config.url) {
-    const fullUrl = new URL(config.url, config.baseURL)
-    if (fullUrl.protocol !== 'https:') {
-      config.url = fullUrl.toString().replace('http:', 'https:')
-    }
-  }
-  
-  // Rest of your existing interceptor code...
   if (config.headers) {
     config.headers['Accept'] = 'application/json'
     config.headers['Content-Type'] = 'application/json'
