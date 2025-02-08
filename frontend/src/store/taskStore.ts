@@ -36,10 +36,9 @@ interface TaskState {
   cleanup: () => void
 }
 
-// Get base API URL based on environment
-const API_URL = import.meta.env.DEV 
-  ? 'http://localhost:8000' 
-  : 'https://toucan-backend-production.up.railway.app'
+// Get base API URL from environment variable
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+console.log('API URL:', API_URL, 'Environment:', import.meta.env.MODE)
 
 // Create an axios instance with default config
 const api = axios.create({
@@ -48,11 +47,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-  },
-  validateStatus: function (status) {
-    return status >= 200 && status < 500;
-  },
-  timeout: 10000,
+  }
 })
 
 // Add request interceptor for logging
@@ -66,18 +61,12 @@ api.interceptors.request.use((config) => {
     }
   }
 
-  // Log the actual URL being used
-  const fullUrl = new URL(config.url || '', config.baseURL)
-  console.log('🚀 Request:', {
+  console.log('Request:', {
+    url: `${config.baseURL}${config.url}`,
     method: config.method?.toUpperCase(),
-    fullUrl: fullUrl.toString(),
-    headers: config.headers,
-    data: config.data,
+    headers: config.headers
   })
   return config
-}, (error) => {
-  console.error('❌ Request Error:', error)
-  return Promise.reject(error)
 })
 
 // Add response interceptor for logging
