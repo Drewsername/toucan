@@ -16,20 +16,39 @@ app = FastAPI()
 # Get environment variables
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
 railway_domain = os.getenv("RAILWAY_PRIVATE_DOMAIN", "toucan.up.railway.app")
+production_domain = os.getenv("PRODUCTION_DOMAIN", "get-toucan.com")
 port = int(os.getenv("PORT", "8000"))  # Convert to int for uvicorn
 
 # Log environment information
 logger.info("Starting server with:")
 logger.info(f"Frontend URL: {frontend_url}")
 logger.info(f"Railway domain: {railway_domain}")
+logger.info(f"Production domain: {production_domain}")
 logger.info(f"Port: {port}")
 logger.info(f"Project: {os.getenv('RAILWAY_PROJECT_NAME', 'local')}")
 logger.info(f"Environment: {os.getenv('RAILWAY_ENVIRONMENT_NAME', 'development')}")
 
 # Configure CORS
+allowed_origins = [
+    frontend_url,  # Development frontend
+    f"https://{railway_domain}",  # Railway domain
+    f"https://www.{production_domain}",  # Production www
+    f"https://{production_domain}",  # Production apex
+    "https://healthcheck.railway.app",  # Railway healthcheck
+]
+
+# Add localhost for development
+if os.getenv("RAILWAY_ENVIRONMENT_NAME") != "production":
+    allowed_origins.extend([
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000",
+    ])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[frontend_url],  # Frontend URL
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
