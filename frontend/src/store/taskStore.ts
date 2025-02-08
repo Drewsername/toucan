@@ -37,9 +37,17 @@ interface TaskState {
 }
 
 // Get base API URL and ensure HTTPS in production
-const API_URL = import.meta.env.PROD 
-  ? 'https://toucan-backend-production.up.railway.app'
-  : 'http://localhost:8000'
+const API_URL = (() => {
+  const url = import.meta.env.PROD 
+    ? 'https://toucan-backend-production.up.railway.app'
+    : 'http://localhost:8000'
+  
+  // Double-check HTTPS enforcement
+  if (import.meta.env.PROD && !url.startsWith('https://')) {
+    throw new Error('Production API URL must use HTTPS')
+  }
+  return url
+})()
 
 // Create an axios instance with default config
 const api = axios.create({
@@ -57,39 +65,39 @@ const api = axios.create({
   timeout: 10000,
 })
 
-// Add request interceptor for logging
-api.interceptors.request.use(
-  (config) => {
-    // Ensure headers are properly set for CORS
-    if (config.headers) {
-      config.headers['Accept'] = 'application/json';
-      config.headers['Content-Type'] = 'application/json';
-      // Add Authorization header if it exists
-      const { session } = useAuthStore.getState();
-      if (session?.access_token) {
-        config.headers['Authorization'] = `Bearer ${session.access_token}`;
-      }
+// Add request interceptor for HTTPS enforcement
+api.interceptors.request.use((config) => {
+  // Ensure HTTPS in production for all requests
+  if (import.meta.env.PROD && config.url) {
+    const fullUrl = new URL(config.url, config.baseURL)
+    if (fullUrl.protocol !== 'https:') {
+      config.url = fullUrl.toString().replace('http:', 'https:')
     }
-
-    console.log('🚀 Request:', {
-      method: config.method?.toUpperCase(),
-      url: config.url,
-      headers: config.headers,
-      data: config.data,
-      withCredentials: config.withCredentials,
-      baseURL: config.baseURL
-    });
-    return config;
-  },
-  (error) => {
-    console.error('❌ Request Error:', {
-      message: error.message,
-      code: error.code,
-      config: error.config
-    });
-    return Promise.reject(error);
   }
-);
+  
+  // Rest of your existing interceptor code...
+  if (config.headers) {
+    config.headers['Accept'] = 'application/json'
+    config.headers['Content-Type'] = 'application/json'
+    const { session } = useAuthStore.getState()
+    if (session?.access_token) {
+      config.headers['Authorization'] = `Bearer ${session.access_token}`
+    }
+  }
+
+  console.log('🚀 Request:', {
+    method: config.method?.toUpperCase(),
+    url: config.url,
+    headers: config.headers,
+    data: config.data,
+    withCredentials: config.withCredentials,
+    baseURL: config.baseURL
+  })
+  return config
+}, (error) => {
+  console.error('❌ Request Error:', error)
+  return Promise.reject(error)
+})
 
 // Add response interceptor for logging
 api.interceptors.response.use(
