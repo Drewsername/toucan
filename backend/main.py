@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from routers import auth, tasks
 import os
 import logging
@@ -39,6 +39,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Force HTTPS in production
+@app.middleware("http")
+async def force_https(request: Request, call_next):
+    if os.environ.get("ENVIRONMENT") == "production":
+        if request.url.scheme == "http":
+            https_url = str(request.url).replace("http://", "https://", 1)
+            return RedirectResponse(https_url, status_code=301)
+    return await call_next(request)
 
 # Include routers
 app.include_router(auth.router)

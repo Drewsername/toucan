@@ -5,6 +5,135 @@ sidebar_position: 1
 # Deployment Guide
 
 ## Overview
-Documentation for our Railway-based deployment process, including CI/CD pipeline and environment management.
+This guide covers our Railway-based deployment process, including common issues and their solutions.
 
-*Documentation coming soon...*
+## Backend Deployment Requirements
+
+### Required Files
+
+1. **Procfile** (in `/backend`):
+```bash
+web: uvicorn main:app --host 0.0.0.0 --port $PORT
+```
+This file is crucial for Railway to know how to start the FastAPI application. The settings ensure:
+- Uses uvicorn as the ASGI server
+- Binds to 0.0.0.0 to accept external connections
+- Uses Railway's dynamic $PORT environment variable
+
+2. **poetry.lock and pyproject.toml**:
+- Must be in sync to avoid deployment issues
+- If you see warnings about lock file inconsistency, run:
+```bash
+cd backend
+poetry lock
+```
+
+### CORS Configuration
+
+The backend uses FastAPI's built-in CORS middleware with the following configuration:
+
+```python
+origins = [
+    "https://www.get-toucan.com",
+    "https://get-toucan.com",
+    "https://toucan.up.railway.app",
+    "http://localhost:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+### HTTPS Requirements
+
+All production URLs must use HTTPS to avoid mixed content errors. Ensure:
+
+1. **Frontend Environment Variables**:
+```bash
+# .env.production
+VITE_API_URL=https://toucan-backend-production.up.railway.app
+```
+
+2. **Railway Configuration**:
+- Railway automatically provides HTTPS for all deployments
+- Your domain should be configured to use HTTPS
+- The `RAILWAY_STATIC_URL` should use HTTPS
+
+## Common Deployment Issues
+
+### 502 Bad Gateway
+If you see a 502 Bad Gateway error, check:
+1. Procfile exists and has correct configuration
+2. poetry.lock is in sync with pyproject.toml
+3. All environment variables are set in Railway dashboard
+
+### CORS Errors
+If you see CORS errors:
+1. Verify your domain is in the `origins` list in `main.py`
+2. Check that the backend is actually running (not returning 502)
+3. Ensure all CORS middleware settings match the FastAPI docs exactly
+
+### Mixed Content Errors
+If you see mixed content errors:
+1. Check all API URLs use HTTPS in production
+2. Verify environment variables are using HTTPS URLs
+3. Update any hardcoded URLs to use HTTPS
+4. Clear browser cache after fixing URLs
+
+## Deployment Process
+
+1. **Prepare for Deployment**
+   ```bash
+   # Ensure poetry.lock is up to date
+   cd backend
+   poetry lock
+   
+   # Verify Procfile exists
+   cat Procfile
+   
+   # Check environment variables
+   cat .env.production
+   ```
+
+2. **Deploy Changes**
+   ```bash
+   # Commit changes
+   git add .
+   git commit -m "your commit message"
+   git push origin main
+   ```
+
+3. **Verify Deployment**
+   ```bash
+   # Check health endpoint (note the https)
+   curl -v https://toucan-backend-production.up.railway.app/health
+   ```
+
+## Environment Variables
+
+Required environment variables in Railway:
+- `PORT` (set automatically by Railway)
+- `DATABASE_URL` (from Supabase)
+- `SUPABASE_URL`
+- `SUPABASE_KEY`
+- `ENVIRONMENT` (e.g., "production")
+
+Frontend environment variables:
+- `VITE_API_URL` (must use HTTPS in production)
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+## Monitoring
+
+- Railway provides deployment logs in their dashboard
+- The `/health` endpoint returns useful diagnostic information:
+  - Current environment
+  - Timestamp
+  - Allowed CORS origins
+  - Database connection status
+- Monitor browser console for mixed content or CORS errors
