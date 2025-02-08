@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.proxy_headers import ProxyHeadersMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from routers import auth, tasks
 import os
@@ -24,9 +25,13 @@ load_dotenv()
 # Create FastAPI app instance
 app = FastAPI()
 
-# Add ProxyHeadersMiddleware to trust headers like X-Forwarded-Proto
+# Add TrustedHostMiddleware to trust headers like X-Forwarded-Proto
 # This must be added before other middleware
-app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
+
+# Add HTTPSRedirectMiddleware to force HTTPS in production
+if os.environ.get("ENVIRONMENT") == "production":
+    app.add_middleware(HTTPSRedirectMiddleware)
 
 # Define allowed origins
 origins = [
