@@ -112,13 +112,17 @@ class Database:
     ) -> Optional[str]:
         """Insert a record and return its ID"""
         try:
+            logger.info(f"Inserting record into {table}")
             result = self.client.table(table).insert(data).execute()
             if result.data:
+                logger.info(f"Successfully inserted record with ID: {result.data[0]['id']}")
                 return result.data[0]["id"]
+            logger.warning(f"Insert into {table} returned no data")
             return None
         except Exception as e:
-            print(f"Error inserting into {table}: {e}")
-            return None
+            error_msg = f"Error inserting into {table}: {str(e)}"
+            logger.error(error_msg, exc_info=True)
+            raise RuntimeError(error_msg)
 
     async def update(
         self, 
@@ -128,15 +132,22 @@ class Database:
     ) -> bool:
         """Update records matching the filters"""
         try:
+            logger.info(f"Updating records in {table} with filters: {filters}")
             query = self.client.table(table)
             for key, value in filters.items():
                 query = query.eq(key, value)
             
             result = query.update(data).execute()
-            return bool(result.data)
+            success = bool(result.data)
+            if success:
+                logger.info(f"Successfully updated records in {table}")
+            else:
+                logger.warning(f"Update in {table} affected no records")
+            return success
         except Exception as e:
-            print(f"Error updating {table}: {e}")
-            return False
+            error_msg = f"Error updating {table}: {str(e)}"
+            logger.error(error_msg, exc_info=True)
+            raise RuntimeError(error_msg)
 
     async def delete(
         self, 
@@ -145,13 +156,20 @@ class Database:
     ) -> bool:
         """Delete records matching the filters"""
         try:
+            logger.info(f"Deleting records from {table} with filters: {filters}")
             # Build the delete query with filters
             delete_query = self.client.from_(table).delete()
             for key, value in filters.items():
                 delete_query = delete_query.eq(key, value)
             
             result = delete_query.execute()
-            return bool(result.data)
+            success = bool(result.data)
+            if success:
+                logger.info(f"Successfully deleted records from {table}")
+            else:
+                logger.warning(f"Delete from {table} affected no records")
+            return success
         except Exception as e:
-            print(f"Error deleting from {table}: {e}")
-            return False 
+            error_msg = f"Error deleting from {table}: {str(e)}"
+            logger.error(error_msg, exc_info=True)
+            raise RuntimeError(error_msg) 
