@@ -40,9 +40,17 @@ interface TaskState {
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 console.log('API URL:', API_URL, 'Environment:', import.meta.env.MODE)
 
+// Ensure HTTPS for production URLs
+const ensureHttps = (url: string) => {
+  if (import.meta.env.PROD && url.startsWith('http://')) {
+    return url.replace('http://', 'https://')
+  }
+  return url
+}
+
 // Create an axios instance with default config
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: ensureHttps(API_URL),
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -50,8 +58,16 @@ const api = axios.create({
   }
 })
 
-// Add request interceptor for logging
+// Add request interceptor for logging and HTTPS enforcement
 api.interceptors.request.use((config) => {
+  // Ensure the full URL uses HTTPS in production
+  if (import.meta.env.PROD) {
+    config.baseURL = ensureHttps(config.baseURL || '')
+    if (config.url) {
+      config.url = ensureHttps(config.url)
+    }
+  }
+
   if (config.headers) {
     config.headers['Accept'] = 'application/json'
     config.headers['Content-Type'] = 'application/json'
@@ -61,8 +77,10 @@ api.interceptors.request.use((config) => {
     }
   }
 
+  // Log the final URL that will be used
+  const finalUrl = new URL(config.url || '', config.baseURL).toString()
   console.log('Request:', {
-    url: `${config.baseURL}${config.url}`,
+    url: finalUrl,
     method: config.method?.toUpperCase(),
     headers: config.headers
   })
