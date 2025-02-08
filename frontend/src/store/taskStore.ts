@@ -41,20 +41,32 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 // Create an axios instance with default config
 const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true, // Important for CORS with credentials
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
+  // Ensure proper CORS handling
+  validateStatus: function (status) {
+    return status >= 200 && status < 500; // Handle all responses except server errors
+  }
 })
 
 // Add request interceptor for logging
 api.interceptors.request.use(
   (config) => {
+    // Ensure headers are properly set for CORS
+    if (config.headers) {
+      config.headers['Accept'] = 'application/json';
+      config.headers['Content-Type'] = 'application/json';
+    }
+
     console.log('🚀 Request:', {
       method: config.method?.toUpperCase(),
       url: config.url,
       headers: config.headers,
       data: config.data,
+      withCredentials: config.withCredentials
     });
     return config;
   },

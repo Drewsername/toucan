@@ -7,7 +7,6 @@ import logging
 import sys
 from dotenv import load_dotenv
 from starlette.middleware.base import BaseHTTPMiddleware
-from fastapi.middleware.cors import CORSMiddleware
 import json
 
 # Configure logging to output to stdout with more detailed format
@@ -44,17 +43,29 @@ app.add_middleware(RequestLoggingMiddleware)
 # Debug log before CORS setup
 logger.debug("Setting up CORS middleware...")
 
-# Get allowed origins from environment variable, fallback to default if not set
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://www.get-toucan.com,https://get-toucan.com,https://toucan.up.railway.app,http://localhost:5173")
-allowed_origins = [origin.strip() for origin in ALLOWED_ORIGINS.split(",")]
+# Define default origins
+DEFAULT_ORIGINS = [
+    "https://www.get-toucan.com",
+    "https://get-toucan.com",
+    "https://toucan.up.railway.app",
+    "http://localhost:5173"
+]
+
+# Get allowed origins from environment variable or use defaults
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "").split(",")
+allowed_origins = [origin.strip() for origin in allowed_origins if origin.strip()]
+
+if not allowed_origins:
+    allowed_origins = DEFAULT_ORIGINS
+
 logger.debug(f"Configured allowed origins: {allowed_origins}")
 
 # Add CORS middleware to the application
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Temporarily allow all origins for debugging
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
     expose_headers=["*"],
     max_age=3600,
@@ -63,23 +74,18 @@ app.add_middleware(
 # Debug log after CORS setup
 logger.debug("CORS middleware setup complete")
 
-@app.options("/{full_path:path}")
-async def options_route(request: Request, full_path: str):
-    """Handle OPTIONS requests explicitly for debugging"""
-    logger.debug(f"OPTIONS request received for path: /{full_path}")
-    logger.debug(f"Request headers: {dict(request.headers)}")
+@app.middleware("http")
+async def add_cors_headers(request: Request, call_next):
+    """Additional middleware to ensure CORS headers are present"""
+    response = await call_next(request)
     
     origin = request.headers.get("origin")
-    logger.debug(f"Origin header: {origin}")
+    if origin and origin in allowed_origins:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+        response.headers["Access-Control-Allow-Headers"] = "*"
     
-    # Return response with CORS headers
-    response = Response()
-    response.headers["Access-Control-Allow-Origin"] = origin or "*"
-    response.headers["Access-Control-Allow-Methods"] = "*"
-    response.headers["Access-Control-Allow-Headers"] = "*"
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    
-    logger.debug(f"Response headers: {dict(response.headers)}")
     return response
 
 # Include routers
