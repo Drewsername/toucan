@@ -2,10 +2,12 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "npm run build"
+    "nixpacksConfigPath": "nixpacks.toml",
+    "buildCommand": "NODE_ENV=production npm install --include=dev && npm run build"
   },
   "deploy": {
-    "startCommand": "npm run preview",
+    "numReplicas": 1,
+    "startCommand": "PORT=8080 npm run serve",
     "healthcheckPath": "/",
     "healthcheckTimeout": 100,
     "healthcheckInterval": 30,
@@ -14,8 +16,9 @@
   },
   "env": {
     "NODE_ENV": "production",
-    "VITE_SUPABASE_URL": "https://get-toucan.com",
-    "VITE_SUPABASE_ANON_KEY": "",
+    "VITE_SUPABASE_URL": "https://oeljcmhlomgdhencufwj.supabase.co",
+    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lbGpjbWhsb21nZGhlbmN1ZndqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg4MDQ5NTgsImV4cCI6MjA1NDM4MDk1OH0.BsP1jq7gPlH12iuEfTacClmm3Us9B07n4vrPOU-yjXc",
+    "VITE_PUBLIC_URL": "https://toucan-production.up.railway.app",
     "VITE_BACKEND_URL": "https://backend.get-toucan.com"
   }
 } 
