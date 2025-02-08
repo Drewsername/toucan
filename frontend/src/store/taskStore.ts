@@ -49,7 +49,9 @@ const api = axios.create({
   // Ensure proper CORS handling
   validateStatus: function (status) {
     return status >= 200 && status < 500; // Handle all responses except server errors
-  }
+  },
+  // Add timeout
+  timeout: 10000,
 })
 
 // Add request interceptor for logging
@@ -66,12 +68,17 @@ api.interceptors.request.use(
       url: config.url,
       headers: config.headers,
       data: config.data,
-      withCredentials: config.withCredentials
+      withCredentials: config.withCredentials,
+      baseURL: config.baseURL
     });
     return config;
   },
   (error) => {
-    console.error('❌ Request Error:', error);
+    console.error('❌ Request Error:', {
+      message: error.message,
+      code: error.code,
+      config: error.config
+    });
     return Promise.reject(error);
   }
 );
@@ -84,12 +91,19 @@ api.interceptors.response.use(
       statusText: response.statusText,
       headers: response.headers,
       data: response.data,
+      config: {
+        url: response.config.url,
+        method: response.config.method,
+        baseURL: response.config.baseURL
+      }
     });
     return response;
   },
   (error) => {
     console.error('❌ Response Error:', {
       message: error.message,
+      name: error.name,
+      code: error.code,
       status: error.response?.status,
       statusText: error.response?.statusText,
       headers: error.response?.headers,
@@ -99,6 +113,8 @@ api.interceptors.response.use(
         method: error.config?.method,
         headers: error.config?.headers,
         withCredentials: error.config?.withCredentials,
+        baseURL: error.config?.baseURL,
+        timeout: error.config?.timeout
       }
     });
     return Promise.reject(error);
@@ -108,6 +124,9 @@ api.interceptors.response.use(
 // Maximum number of retries for fetching tasks
 const MAX_RETRIES = 3
 const RETRY_DELAY = 1000 // 1 second
+
+// Helper function to delay execution
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const useTaskStore = create<TaskState>()((set, get) => ({
   tasks: [],
