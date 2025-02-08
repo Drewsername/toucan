@@ -36,24 +36,9 @@ interface TaskState {
   cleanup: () => void
 }
 
-// Get base API URL from environment variable
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-console.log('API URL:', API_URL, 'Environment:', import.meta.env.MODE)
-
-// Ensure HTTPS for production URLs
-const ensureHttps = (url: string) => {
-  if (import.meta.env.PROD && url.startsWith('http://')) {
-    return url.replace('http://', 'https://')
-  }
-  return url
-}
-
 // Create axios instance with environment-specific config
 const api = axios.create({
-  // In development, use the proxy. In production, use backend subdomain
-  baseURL: import.meta.env.DEV 
-    ? '/api' 
-    : 'https://backend.get-toucan.com',
+  baseURL: '/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -161,7 +146,7 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
     set({ loading: true, error: null })
 
     try {
-      const response = await api.get('/tasks/active')
+      const response = await api.get('/tasks/active/')
       // Ensure response.data is an array, default to empty array if not
       const tasks = Array.isArray(response.data) ? response.data : []
       set((state) => ({ 
@@ -194,7 +179,7 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
 
     try {
       await api.post(
-        '/tasks',
+        '/tasks/',
         taskData,
         {
           headers: {
@@ -225,7 +210,7 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
 
     try {
       await api.post(
-        `/tasks/${taskId}/complete`,
+        `/tasks/${taskId}/complete/`,
         {},
         {
           headers: {
@@ -257,7 +242,7 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
 
     try {
       await api.post(
-        `/tasks/${taskId}/validate`,
+        `/tasks/${taskId}/validate/`,
         {},
         {
           headers: {
@@ -284,7 +269,7 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
 
     try {
       await api.delete(
-        `/tasks/${taskId}`,
+        `/tasks/${taskId}/`,
         {
           headers: {
             Authorization: `Bearer ${session.access_token}`

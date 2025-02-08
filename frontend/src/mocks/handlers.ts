@@ -1,11 +1,8 @@
 import { http, HttpResponse } from 'msw'
 import type { Task, Offer, Profile } from '../types'
 
-// Get base API URL and ensure HTTPS in production
-let baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-if (import.meta.env.PROD && !baseUrl.startsWith('https://')) {
-  baseUrl = baseUrl.replace('http://', 'https://')
-}
+// Use relative URL for API requests
+const baseUrl = '/api'
 
 // Mock data
 const mockProfile: Profile = {
@@ -14,7 +11,8 @@ const mockProfile: Profile = {
   pair_code: 'ABC123',
   paired: false,
   points: 100,
-  created_at: new Date().toISOString()
+  created_at: new Date().toISOString(),
+  is_admin: false
 }
 
 const mockTask: Task = {
@@ -41,16 +39,16 @@ const mockOffer: Offer = {
 
 export const handlers = [
   // Auth endpoints
-  http.get(`${baseUrl}/auth/session`, () => {
+  http.get(`${baseUrl}/auth/session/`, () => {
     return HttpResponse.json({ session: null })
   }),
 
   // Task endpoints
-  http.get(`${baseUrl}/tasks/active`, () => {
+  http.get(`${baseUrl}/tasks/active/`, () => {
     return HttpResponse.json([mockTask])
   }),
 
-  http.post(`${baseUrl}/tasks`, async ({ request }) => {
+  http.post(`${baseUrl}/tasks/`, async ({ request }) => {
     const body = await request.json()
     const newTask: Task = {
       ...mockTask,
@@ -59,20 +57,20 @@ export const handlers = [
     return HttpResponse.json(newTask)
   }),
 
-  http.post(`${baseUrl}/tasks/:id/complete`, () => {
+  http.post(`${baseUrl}/tasks/:id/complete/`, () => {
     return HttpResponse.json({ message: 'Task completed' })
   }),
 
-  http.delete(`${baseUrl}/tasks/:id`, () => {
+  http.delete(`${baseUrl}/tasks/:id/`, () => {
     return HttpResponse.json({ message: 'Task deleted successfully' })
   }),
 
   // Offer endpoints
-  http.get(`${baseUrl}/offers/available`, () => {
+  http.get(`${baseUrl}/offers/available/`, () => {
     return HttpResponse.json([mockOffer])
   }),
 
-  http.post(`${baseUrl}/offers`, async ({ request }) => {
+  http.post(`${baseUrl}/offers/`, async ({ request }) => {
     const body = await request.json()
     const newOffer: Offer = {
       ...mockOffer,
@@ -81,11 +79,11 @@ export const handlers = [
     return HttpResponse.json(newOffer)
   }),
 
-  http.post(`${baseUrl}/offers/:id/purchase`, () => {
+  http.post(`${baseUrl}/offers/:id/purchase/`, () => {
     return HttpResponse.json({ message: 'Offer purchased' })
   }),
 
-  http.post(`${baseUrl}/offers/:id/spin`, () => {
+  http.post(`${baseUrl}/offers/:id/spin/`, () => {
     return HttpResponse.json({
       discount_percentage: 25,
       discounted_cost: 37
@@ -93,15 +91,15 @@ export const handlers = [
   }),
 
   // Pairing endpoints
-  http.post(`${baseUrl}/pair/generate`, () => {
+  http.post(`${baseUrl}/pair/generate/`, () => {
     return HttpResponse.json({ code: 'ABC123' })
   }),
 
-  http.post(`${baseUrl}/pair/:code`, () => {
+  http.post(`${baseUrl}/pair/:code/`, () => {
     return HttpResponse.json({ message: 'Pairing request sent' })
   }),
 
-  http.post(`${baseUrl}/pair/approve/:userId`, () => {
+  http.post(`${baseUrl}/pair/approve/:userId/`, () => {
     return HttpResponse.json({ message: 'Pairing approved' })
   })
 ] 
