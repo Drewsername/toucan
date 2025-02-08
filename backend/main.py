@@ -27,6 +27,9 @@ app = FastAPI()
 origins = [
     "https://www.get-toucan.com",
     "https://get-toucan.com",
+    "https://backend.get-toucan.com",
+    "https://api.get-toucan.com",
+    "https://*.get-toucan.com",  # Allow all subdomains
     "https://toucan.up.railway.app",
     "http://localhost:5173",
     # Allow internal Railway DNS
