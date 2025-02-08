@@ -1,13 +1,12 @@
+# backend/main.py
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
-from routers import auth, tasks
 import os
+import datetime
 import logging
 import sys
-from dotenv import load_dotenv
-import traceback
-import datetime
 
 # Configure logging
 logging.basicConfig(
@@ -17,21 +16,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Load environment variables
-load_dotenv()
-
-# Create FastAPI app instance
 app = FastAPI()
 
-# Define allowed origins
+# Set allowed origins to only the frontend domains.
 origins = [
-    "https://www.get-toucan.com",
-    "https://get-toucan.com",
-    "https://toucan.up.railway.app",
-    "http://localhost:5173",
+    "https://www.get-toucan.com",  # your Railway frontend custom domain
+    "http://localhost:5173"        # local development
 ]
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -40,35 +32,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Force HTTPS in production
+# HTTPS enforcement middleware using x-forwarded-proto header.
 @app.middleware("http")
-async def force_https(request: Request, call_next):
-    if os.environ.get("ENVIRONMENT") == "production":
-        if request.url.scheme == "http":
-            https_url = str(request.url).replace("http://", "https://", 1)
-            return RedirectResponse(https_url, status_code=301)
+async def https_redirect(request: Request, call_next):
+    # In production, rely on the x-forwarded-proto header provided by Railway
+    # (or your reverse proxy) instead of request.url.scheme.
+    forwarded_proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+    if os.environ.get("ENVIRONMENT") == "production" and forwarded_proto != "https":
+        url = str(request.url)
+        https_url = url.replace("http://", "https://", 1)
+        return RedirectResponse(https_url, status_code=301)
     return await call_next(request)
 
-# Include routers
+# Include your routers
+from routers import auth, tasks
 app.include_router(auth.router)
 app.include_router(tasks.router)
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint for Railway"""
-    try:
-        return {
-            "status": "healthy",
-            "timestamp": datetime.datetime.utcnow().isoformat(),
-            "environment": os.environ.get("ENVIRONMENT", "unknown"),
-            "allowed_origins": origins
-        }
-    except Exception as e:
-        logger.error(f"Health check failed: {str(e)}")
-        return JSONResponse(
-            status_code=500,
-            content={"status": "unhealthy", "error": str(e)}
-        )
+    return {
+        "status": "healthy",
+        "timestamp": datetime.datetime.utcnow().isoformat(),
+        "environment": os.environ.get("ENVIRONMENT", "unknown"),
+        "allowed_origins": origins
+    }
 
 @app.get("/")
 async def root():

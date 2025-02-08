@@ -37,24 +37,22 @@ interface TaskState {
 }
 
 // Get base API URL and ensure HTTPS in production
-let API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-if (import.meta.env.PROD && !API_URL.startsWith('https://')) {
-  API_URL = API_URL.replace('http://', 'https://')
+let BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
+if (import.meta.env.PROD && !BACKEND_URL.startsWith('https://')) {
+  BACKEND_URL = BACKEND_URL.replace('http://', 'https://')
 }
 
 // Create an axios instance with default config
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: BACKEND_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  // Ensure proper CORS handling
   validateStatus: function (status) {
-    return status >= 200 && status < 500; // Handle all responses except server errors
+    return status >= 200 && status < 500;
   },
-  // Add timeout
   timeout: 10000,
 })
 
