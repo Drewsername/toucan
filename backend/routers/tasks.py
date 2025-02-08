@@ -3,6 +3,9 @@ from typing import List
 from models.task import Task, TaskCreate
 from models.user import User
 from dependencies import get_current_user
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -30,24 +33,33 @@ async def get_active_tasks(
     current_user: User = Depends(get_current_user)
 ) -> List[dict]:
     """Get all active tasks for the current user"""
-    tasks = await Task.get_active_tasks(current_user)
-    return [
-        {
-            "id": task.id,
-            "title": task.data.title,
-            "description": task.data.description,
-            "points": task.data.points,
-            "creator_id": task.data.creator_id,
-            "assignee_id": task.data.assignee_id,
-            "status": task.data.status,
-            "validation_required": task.data.validation_required,
-            "random_payout": task.data.random_payout,
-            "min_points": task.data.min_points,
-            "max_points": task.data.max_points,
-            "due_date": task.data.due_date
-        }
-        for task in tasks
-    ]
+    try:
+        logger.info(f"Fetching active tasks for user {current_user.id}")
+        tasks = await Task.get_active_tasks(current_user)
+        logger.info(f"Found {len(tasks)} active tasks")
+        return [
+            {
+                "id": task.id,
+                "title": task.data.title,
+                "description": task.data.description,
+                "points": task.data.points,
+                "creator_id": task.data.creator_id,
+                "assignee_id": task.data.assignee_id,
+                "status": task.data.status,
+                "validation_required": task.data.validation_required,
+                "random_payout": task.data.random_payout,
+                "min_points": task.data.min_points,
+                "max_points": task.data.max_points,
+                "due_date": task.data.due_date
+            }
+            for task in tasks
+        ]
+    except Exception as e:
+        logger.error(f"Error fetching tasks: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
 
 @router.post("/{task_id}/complete")
 async def complete_task(
