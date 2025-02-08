@@ -164,11 +164,17 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
     const { session } = useAuthStore.getState()
     if (!session) return
 
+    // Only set loading, don't clear tasks
     set({ loading: true, error: null })
 
     try {
       const response = await api.get('/tasks/active')
-      set({ tasks: response.data, loading: false, error: null })
+      // Keep existing tasks until we have new ones
+      set((state) => ({ 
+        tasks: response.data,
+        loading: false, 
+        error: null 
+      }))
     } catch (error) {
       console.error('Error fetching tasks:', error)
       
@@ -179,10 +185,11 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
         await delay(backoffDelay);
         return get().fetchTasks(retryCount + 1);
       } else {
-        set({ 
+        // Keep existing tasks on error
+        set((state) => ({ 
           error: 'Failed to fetch tasks',
           loading: false
-        })
+        }))
       }
     }
   },
@@ -314,8 +321,11 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
       }
     })
 
-    // Initial fetch of tasks
-    get().fetchTasks()
+    // Initial fetch of tasks (if we don't have any)
+    const currentTasks = get().tasks
+    if (currentTasks.length === 0) {
+      get().fetchTasks()
+    }
 
     channel
       .on('presence', { event: 'sync' }, () => {
@@ -341,22 +351,29 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
           switch (payload.eventType) {
             case 'INSERT': {
               const newTask = payload.new as Task
-              set({ tasks: [...currentTasks, newTask] })
+              set((state) => ({ 
+                tasks: [...state.tasks, newTask] 
+              }))
               break
             }
             case 'UPDATE': {
               const updatedTask = payload.new as Task
-              const taskIndex = currentTasks.findIndex(t => t.id === updatedTask.id)
-              if (taskIndex !== -1) {
-                const updatedTasks = [...currentTasks]
-                updatedTasks[taskIndex] = updatedTask
-                set({ tasks: updatedTasks })
-              }
+              set((state) => {
+                const taskIndex = state.tasks.findIndex(t => t.id === updatedTask.id)
+                if (taskIndex !== -1) {
+                  const updatedTasks = [...state.tasks]
+                  updatedTasks[taskIndex] = updatedTask
+                  return { tasks: updatedTasks }
+                }
+                return state
+              })
               break
             }
             case 'DELETE': {
               const deletedTaskId = payload.old.id
-              set({ tasks: currentTasks.filter(t => t.id !== deletedTaskId) })
+              set((state) => ({
+                tasks: state.tasks.filter(t => t.id !== deletedTaskId)
+              }))
               break
             }
           }
