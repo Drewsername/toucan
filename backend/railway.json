@@ -16,6 +16,8 @@
     "PYTHON_VERSION": "3.11",
     "POETRY_VERSION": "1.7.1",
     "ENVIRONMENT": "production",
-    "FORCE_HTTPS": "true"
+    "FORCE_HTTPS": "true",
+    "SUPABASE_URL": "https://oeljcmhlomgdhencufwj.supabase.co",
+    "SUPABASE_SERVICE_ROLE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
   }
 } 
