@@ -314,6 +314,9 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
       }
     })
 
+    // Initial fetch of tasks
+    get().fetchTasks()
+
     channel
       .on('presence', { event: 'sync' }, () => {
         console.log('Presence state synced')
@@ -365,8 +368,7 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
       console.log('Supabase subscription status:', status)
       if (status === 'SUBSCRIBED') {
         set({ subscribed: true, channel })
-        // Initial fetch after subscription is confirmed
-        await get().fetchTasks()
+        // We don't need to fetch here since we already fetched at the start
       } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
         console.log('Channel closed or error, cleaning up...')
         set({ subscribed: false })
