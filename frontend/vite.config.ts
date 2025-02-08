@@ -24,13 +24,6 @@ export default defineConfig({
     headers: {
       'Access-Control-Allow-Origin': '*',
     },
-    proxy: {
-      '/api': {
-        target: 'https://toucan-backend-production.up.railway.app',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
-      }
-    },
     // Allow all hosts in production
     allowedHosts: [
       'localhost',
