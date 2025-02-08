@@ -1,7 +1,5 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from routers import auth, tasks
 import os
@@ -25,25 +23,12 @@ load_dotenv()
 # Create FastAPI app instance
 app = FastAPI()
 
-# Add TrustedHostMiddleware to trust headers like X-Forwarded-Proto
-# This must be added before other middleware
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
-
-# Add HTTPSRedirectMiddleware to force HTTPS in production
-if os.environ.get("ENVIRONMENT") == "production":
-    app.add_middleware(HTTPSRedirectMiddleware)
-
 # Define allowed origins
 origins = [
     "https://www.get-toucan.com",
     "https://get-toucan.com",
-    "https://backend.get-toucan.com",
-    "https://api.get-toucan.com",
-    "https://*.get-toucan.com",  # Allow all subdomains
     "https://toucan.up.railway.app",
     "http://localhost:5173",
-    # Allow internal Railway DNS
-    "http://toucan.railway.internal",
 ]
 
 # Add CORS middleware
@@ -54,6 +39,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Force HTTPS in production
+@app.middleware("http")
+async def force_https(request: Request, call_next):
+    if os.environ.get("ENVIRONMENT") == "production":
+        if request.url.scheme == "http":
+            https_url = str(request.url).replace("http://", "https://", 1)
+            return RedirectResponse(https_url, status_code=301)
+    return await call_next(request)
 
 # Include routers
 app.include_router(auth.router)

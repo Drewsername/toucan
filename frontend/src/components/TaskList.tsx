@@ -20,14 +20,12 @@ export default function TaskList ()  {
   }, [profile?.id])
 
   // Show error if there is one and we have no tasks
-  if (error && (!tasks || tasks.length === 0)) {
+  if (error && tasks.length === 0) {
     return <div className="p-4 text-red-500">{error}</div>
   }
 
-  // Ensure tasks is an array before filtering
-  const tasksArray = Array.isArray(tasks) ? tasks : []
-  const assignedTasks = tasksArray.filter(task => task.assignee_id === profile?.id)
-  const createdTasks = tasksArray.filter(task => task.creator_id === profile?.id)
+  const assignedTasks = tasks.filter(task => task.assignee_id === profile?.id)
+  const createdTasks = tasks.filter(task => task.creator_id === profile?.id)
 
   return (
     <div className="p-4">

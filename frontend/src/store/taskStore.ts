@@ -36,39 +36,61 @@ interface TaskState {
   cleanup: () => void
 }
 
-// Create axios instance with environment-specific config
+// Get base API URL and ensure HTTPS in production
+let API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+if (import.meta.env.PROD && !API_URL.startsWith('https://')) {
+  API_URL = API_URL.replace('http://', 'https://')
+}
+
+// Create an axios instance with default config
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-  }
+  },
+  // Ensure proper CORS handling
+  validateStatus: function (status) {
+    return status >= 200 && status < 500; // Handle all responses except server errors
+  },
+  // Add timeout
+  timeout: 10000,
 })
 
 // Add request interceptor for logging
-api.interceptors.request.use((config) => {
-  if (config.headers) {
-    config.headers['Accept'] = 'application/json'
-    config.headers['Content-Type'] = 'application/json'
-    const { session } = useAuthStore.getState()
-    if (session?.access_token) {
-      config.headers['Authorization'] = `Bearer ${session.access_token}`
+api.interceptors.request.use(
+  (config) => {
+    // Ensure headers are properly set for CORS
+    if (config.headers) {
+      config.headers['Accept'] = 'application/json';
+      config.headers['Content-Type'] = 'application/json';
+      // Add Authorization header if it exists
+      const { session } = useAuthStore.getState();
+      if (session?.access_token) {
+        config.headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
     }
-  }
 
-  // Log the full URL being requested
-  const fullUrl = (config.baseURL || '') + (config.url || '')
-  console.log('🔍 Making request to:', fullUrl)
-  console.log('Request:', {
-    url: config.url,
-    baseURL: config.baseURL,
-    fullUrl,
-    method: config.method?.toUpperCase(),
-    headers: config.headers
-  })
-  return config
-})
+    console.log('🚀 Request:', {
+      method: config.method?.toUpperCase(),
+      url: config.url,
+      headers: config.headers,
+      data: config.data,
+      withCredentials: config.withCredentials,
+      baseURL: config.baseURL
+    });
+    return config;
+  },
+  (error) => {
+    console.error('❌ Request Error:', {
+      message: error.message,
+      code: error.code,
+      config: error.config
+    });
+    return Promise.reject(error);
+  }
+);
 
 // Add response interceptor for logging
 api.interceptors.response.use(
@@ -146,11 +168,10 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
     set({ loading: true, error: null })
 
     try {
-      const response = await api.get('/tasks/active/')
-      // Ensure response.data is an array, default to empty array if not
-      const tasks = Array.isArray(response.data) ? response.data : []
+      const response = await api.get('/tasks/active')
+      // Keep existing tasks until we have new ones
       set((state) => ({ 
-        tasks,
+        tasks: response.data,
         loading: false, 
         error: null 
       }))
@@ -164,7 +185,7 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
         await delay(backoffDelay);
         return get().fetchTasks(retryCount + 1);
       } else {
-        // Keep existing tasks on error, just update error state
+        // Keep existing tasks on error
         set((state) => ({ 
           error: 'Failed to fetch tasks',
           loading: false
@@ -179,7 +200,7 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
 
     try {
       await api.post(
-        '/tasks/',
+        '/tasks',
         taskData,
         {
           headers: {
@@ -210,7 +231,7 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
 
     try {
       await api.post(
-        `/tasks/${taskId}/complete/`,
+        `/tasks/${taskId}/complete`,
         {},
         {
           headers: {
@@ -242,7 +263,7 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
 
     try {
       await api.post(
-        `/tasks/${taskId}/validate/`,
+        `/tasks/${taskId}/validate`,
         {},
         {
           headers: {
@@ -269,7 +290,7 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
 
     try {
       await api.delete(
-        `/tasks/${taskId}/`,
+        `/tasks/${taskId}`,
         {
           headers: {
             Authorization: `Bearer ${session.access_token}`
