@@ -50,10 +50,10 @@ const ensureHttps = (url: string) => {
 
 // Create axios instance with environment-specific config
 const api = axios.create({
-  // In development, use the proxy. In production, use same domain with port 8000
+  // In development, use the proxy. In production, use api subdomain
   baseURL: import.meta.env.DEV 
     ? '/api' 
-    : `${window.location.protocol}//${window.location.hostname}:8000`,
+    : 'https://api.get-toucan.com',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
