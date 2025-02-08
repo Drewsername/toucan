@@ -50,7 +50,8 @@ const ensureHttps = (url: string) => {
 
 // Create axios instance with environment-specific config
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  // In development, use the proxy. In production, use relative URLs
+  baseURL: import.meta.env.DEV ? '/api' : '',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -70,7 +71,7 @@ api.interceptors.request.use((config) => {
   }
 
   console.log('Request:', {
-    url: `${config.baseURL}${config.url}`,
+    url: config.url,
     method: config.method?.toUpperCase(),
     headers: config.headers
   })
