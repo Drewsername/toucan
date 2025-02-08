@@ -169,8 +169,23 @@ date,task,description,lessons_learned
 3. Updated Railway start command to use correct module path
 4. Fixed development and production import compatibility
 5. Documented Python package best practices"
+2024-02-08,Python Package Structure Fix,"Fixed Python module imports by properly setting up package structure and Railway configuration","1. All subdirectories need __init__.py files for proper Python package structure
+2. Railway deployment needs correct PYTHONPATH configuration
+3. Poetry install during build ensures proper package installation
+4. Windows PowerShell requires semicolons for command chaining
+5. Package structure is crucial for module imports in production"
 2024-02-08,Railway Configuration Fix,"Fixed Railway deployment configuration and file structure","1. Moved railway.json to root directory for proper deployment
 2. Updated build command to handle backend directory
 3. Maintained correct working directory for Poetry
 4. Fixed deployment path resolution
-5. Documented Railway deployment structure" 
+5. Documented Railway deployment structure"
+2024-02-08,UTF-8 Encoding Fix,"Fixed Python package __init__.py files with proper UTF-8 encoding for Nixpacks build","1. Nixpacks requires valid UTF-8 encoded files for build
+2. Windows line endings can cause issues in Linux environments
+3. Empty __init__.py files should still have proper encoding
+4. Package docstrings help with module documentation
+5. File encoding is crucial for cross-platform compatibility"
+2024-02-08,Import Path Fix,"Fixed Python module imports by using relative import paths and proper package exports","1. Use relative imports (from ..lib) for intra-package imports
+2. Main __init__.py should export all subpackages
+3. Package structure affects import resolution
+4. Relative imports help maintain package hierarchy
+5. Proper imports are crucial for module resolution in production" 

@@ -1,5 +1,5 @@
 from typing import Optional, List, Dict, Any, Callable
-from backend.lib.supabase_client import get_client
+from lib.supabase_client import get_client
 
 class Database:
     _instance: Optional['Database'] = None
