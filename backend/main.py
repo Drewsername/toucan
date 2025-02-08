@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from routers import auth, tasks
 import os
@@ -28,14 +28,31 @@ logger.info(f"Port: {port}")
 logger.info(f"Project: {os.getenv('RAILWAY_PROJECT_NAME', 'local')}")
 logger.info(f"Environment: {os.getenv('RAILWAY_ENVIRONMENT_NAME', 'development')}")
 
-# Configure CORS - temporarily allow all origins for debugging
+# Add middleware to log all requests
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info(f"Request: {request.method} {request.url}")
+    logger.info(f"Headers: {request.headers}")
+    response = await call_next(request)
+    logger.info(f"Response status: {response.status_code}")
+    return response
+
+# Configure CORS with debug logging
+origins = [
+    "https://www.get-toucan.com",
+    "https://get-toucan.com",
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Temporarily allow all origins
-    allow_credentials=False,  # Must be False when using allow_origins=["*"]
+    allow_origins=origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
+    max_age=3600,
 )
 
 # Include routers

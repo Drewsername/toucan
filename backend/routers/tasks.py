@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from typing import List
 from models.task import Task, TaskCreate
 from models.user import User
@@ -6,12 +6,30 @@ from dependencies import get_current_user
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
+def add_cors_headers(response: Response):
+    """Add CORS headers to response"""
+    response.headers["Access-Control-Allow-Origin"] = "https://www.get-toucan.com"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Methods"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Expose-Headers"] = "*"
+
+@router.options("/{path:path}")
+async def options_route(response: Response):
+    """Handle OPTIONS requests"""
+    add_cors_headers(response)
+    return {}
+
 @router.post("/")
 async def create_task(
     task_data: TaskCreate,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    response: Response = None
 ):
     """Create a new task"""
+    if response:
+        add_cors_headers(response)
+        
     # Get the assignee (must be the partner)
     assignee = await current_user.get_partner()
     if not assignee:
@@ -27,9 +45,13 @@ async def create_task(
 
 @router.get("/active")
 async def get_active_tasks(
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    response: Response = None
 ) -> List[dict]:
     """Get all active tasks for the current user"""
+    if response:
+        add_cors_headers(response)
+        
     tasks = await Task.get_active_tasks(current_user)
     return [
         {
@@ -52,9 +74,13 @@ async def get_active_tasks(
 @router.post("/{task_id}/complete")
 async def complete_task(
     task_id: str,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    response: Response = None
 ):
     """Complete a task"""
+    if response:
+        add_cors_headers(response)
+        
     task = await Task.get_by_id(task_id, current_user)
     if not task:
         raise HTTPException(404, "Task not found")
@@ -67,9 +93,13 @@ async def complete_task(
 @router.delete("/{task_id}")
 async def delete_task(
     task_id: str,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    response: Response = None
 ):
     """Delete a task. Only the creator can delete their tasks."""
+    if response:
+        add_cors_headers(response)
+        
     task = await Task.get_by_id(task_id, current_user)
     if not task:
         raise HTTPException(404, "Task not found")
