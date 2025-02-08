@@ -22,9 +22,9 @@ app = FastAPI()
 # Debug log before CORS setup
 logger.debug("Setting up CORS middleware...")
 
-# Hardcode allowed origins as a single string and split it
-ALLOWED_ORIGINS_STR = "https://www.get-toucan.com https://get-toucan.com https://toucan.up.railway.app http://localhost:5173"
-allowed_origins = [origin.strip() for origin in ALLOWED_ORIGINS_STR.split()]
+# Get allowed origins from environment variable, fallback to default if not set
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://www.get-toucan.com,https://get-toucan.com,https://toucan.up.railway.app,http://localhost:5173")
+allowed_origins = [origin.strip() for origin in ALLOWED_ORIGINS.split(",")]
 logger.debug(f"Configured allowed origins: {allowed_origins}")
 
 # Add CORS middleware to the application
@@ -34,7 +34,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"],  # Added to expose all headers
+    expose_headers=["*"],
     max_age=3600,
 )
 

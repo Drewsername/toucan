@@ -38,6 +38,15 @@ interface TaskState {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
+// Create an axios instance with default config
+const api = axios.create({
+  baseURL: API_URL,
+  withCredentials: true, // Important for CORS with credentials
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
+
 // Maximum number of retries for fetching tasks
 const MAX_RETRIES = 3
 const RETRY_DELAY = 1000 // 1 second
@@ -56,7 +65,7 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
     set({ loading: true, error: null })
 
     try {
-      const response = await axios.get(`${API_URL}/tasks/active`, {
+      const response = await api.get('/tasks/active', {
         headers: {
           Authorization: `Bearer ${session.access_token}`
         }
@@ -85,8 +94,8 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
     if (!session) return false
 
     try {
-      await axios.post(
-        `${API_URL}/tasks`,
+      await api.post(
+        '/tasks',
         taskData,
         {
           headers: {
@@ -116,8 +125,8 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
     }
 
     try {
-      await axios.post(
-        `${API_URL}/tasks/${taskId}/complete`,
+      await api.post(
+        `/tasks/${taskId}/complete`,
         {},
         {
           headers: {
@@ -148,8 +157,8 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
     }
 
     try {
-      await axios.post(
-        `${API_URL}/tasks/${taskId}/validate`,
+      await api.post(
+        `/tasks/${taskId}/validate`,
         {},
         {
           headers: {
@@ -175,8 +184,8 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
     set({ tasks: currentTasks.filter(t => t.id !== taskId) })
 
     try {
-      await axios.delete(
-        `${API_URL}/tasks/${taskId}`,
+      await api.delete(
+        `/tasks/${taskId}`,
         {
           headers: {
             Authorization: `Bearer ${session.access_token}`
