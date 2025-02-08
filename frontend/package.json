@@ -20,7 +20,6 @@
     "@supabase/auth-ui-react": "0.4.7",
     "@supabase/auth-ui-shared": "0.1.8",
     "@supabase/supabase-js": "2.39.7",
-    "@types/axios": "^0.14.4",
     "axios": "^1.7.9",
     "framer-motion": "^12.4.1",
     "react": "18.2.0",
