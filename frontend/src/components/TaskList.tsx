@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react'
 import { useTaskStore } from '../store/taskStore'
 import { useAuthStore } from '../store/authStore'
@@ -6,9 +5,8 @@ import TaskCard from './TaskCard'
 import CreateTaskForm from './CreateTaskForm'
 
 export default function TaskList ()  {
-  const { tasks, loading, error, fetchTasks, subscribe, cleanup } = useTaskStore()
+  const { tasks, loading, error, subscribe, cleanup } = useTaskStore()
   const { profile } = useAuthStore()
-
 
   // Initial setup
   useEffect(() => {
@@ -21,22 +19,8 @@ export default function TaskList ()  {
     }
   }, [profile?.id])
 
-  // Periodic refresh as backup
-  useEffect(() => {
-    if (!profile) return
-
-    const interval = setInterval(() => {
-      fetchTasks()
-    }, 30000) // Fetch every 30 seconds as backup
-
-    return () => clearInterval(interval)
-  }, [profile?.id])
-
-  if (loading) {
-    return <div className="p-4">Loading tasks...</div>
-  }
-
-  if (error) {
+  // Show error if there is one and we have no tasks
+  if (error && tasks.length === 0) {
     return <div className="p-4 text-red-500">{error}</div>
   }
 
@@ -55,12 +39,16 @@ export default function TaskList ()  {
       
       {/* Tasks assigned to me */}
       <div className="mb-8">
-        <h3 className="text-xl font-semibold mb-2">Tasks For Me</h3>
+        <h3 className="text-xl font-semibold mb-2">
+          Tasks For Me
+          {loading && <span className="ml-2 text-sm text-gray-500">(refreshing...)</span>}
+        </h3>
         {assignedTasks.length === 0 ? (
-          <p className="text-gray-500">No tasks assigned to you</p>
+          <p className="text-gray-500">
+            {loading && tasks.length === 0 ? 'Loading tasks...' : 'No tasks assigned to you'}
+          </p>
         ) : (
           <div className="grid w-full gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            
             {assignedTasks.map(task => (
               <TaskCard 
                 key={task.id} 
@@ -75,9 +63,14 @@ export default function TaskList ()  {
       
       {/* Tasks I created */}
       <div className="mb-8">
-        <h3 className="text-xl font-semibold mb-2">Tasks I Created</h3>
+        <h3 className="text-xl font-semibold mb-2">
+          Tasks I Created
+          {loading && <span className="ml-2 text-sm text-gray-500">(refreshing...)</span>}
+        </h3>
         {createdTasks.length === 0 ? (
-          <p className="text-gray-500">You haven't created any tasks</p>
+          <p className="text-gray-500">
+            {loading && tasks.length === 0 ? 'Loading tasks...' : 'You haven\'t created any tasks'}
+          </p>
         ) : (
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {createdTasks.map(task => (
