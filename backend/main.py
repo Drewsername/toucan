@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from routers import auth, tasks
 import os
@@ -35,25 +35,31 @@ async def log_requests(request: Request, call_next):
     logger.info(f"Headers: {request.headers}")
     response = await call_next(request)
     logger.info(f"Response status: {response.status_code}")
+    logger.info(f"Response headers: {response.headers}")
     return response
 
-# Configure CORS with debug logging
-origins = [
-    "https://www.get-toucan.com",
-    "https://get-toucan.com",
-    "http://localhost:5173",
-    "http://localhost:3000",
-]
-
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["https://www.get-toucan.com"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"],
     allow_headers=["*"],
     expose_headers=["*"],
     max_age=3600,
 )
+
+# Global OPTIONS handler
+@app.options("/{full_path:path}")
+async def options_handler(request: Request, full_path: str):
+    """Handle all OPTIONS requests"""
+    response = Response()
+    response.headers["Access-Control-Allow-Origin"] = "https://www.get-toucan.com"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, HEAD"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Max-Age"] = "3600"
+    return response
 
 # Include routers
 app.include_router(auth.router)
