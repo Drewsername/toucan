@@ -64,9 +64,13 @@ const createAuthStore = (set: (fn: (state: AuthState) => Partial<AuthState>) => 
 
       // Listen for auth changes
       supabase.auth.onAuthStateChange((_event, session) => {
-        get().setSession(session)
-        if (session) {
-          get().refreshProfile()
+        const currentSession = get().session
+        // Only update if the session actually changed
+        if (session?.access_token !== currentSession?.access_token) {
+          get().setSession(session)
+          if (session) {
+            get().refreshProfile()
+          }
         }
       })
 
